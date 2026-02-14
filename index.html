@@ -76,6 +76,39 @@
     0%,100% { transform: translateY(0px); }
     50% { transform: translateY(-8px); }
   }
+
+  /* ===== NEW PREMIUM ADDITIONS ===== */
+
+  .gradient-text {
+    background: linear-gradient(90deg, #22D3EE, #A855F7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .glass-card {
+    background: rgba(11,18,36,0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(168,85,247,0.3);
+    box-shadow: 0 0 30px rgba(34,211,238,0.15);
+  }
+
+  .glow-button {
+    background: linear-gradient(90deg, #22D3EE, #A855F7);
+    animation: pulseBtn 2s infinite alternate;
+  }
+
+  @keyframes pulseBtn {
+    from { box-shadow: 0 0 10px #22D3EE; }
+    to { box-shadow: 0 0 25px #A855F7; }
+  }
+
+  .divider-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #22D3EE, #A855F7, transparent);
+    margin: 60px auto;
+    width: 80%;
+  }
+
 </style>
 
 <head>
@@ -83,24 +116,74 @@
   <title>ZAcademy AI XAUUSD Trading System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: "#22D3EE",
-            secondary: "#A855F7",
-            darkbg: "#050816",
-            cardbg: "#0B1224"
-          }
-        }
-      }
-    }
-  </script>
 </head>
 
 <body class="bg-darkbg text-white font-sans">
+
+<!-- HERO -->
+<section class="min-h-screen flex items-center justify-center px-6">
+  <div class="max-w-4xl text-center">
+
+    <p class="text-sm text-primary mb-4 tracking-widest">
+      ⚡ LIVE AI ENGINE RUNNING — REAL-TIME DATA ACTIVE
+    </p>
+
+    <img src="/Xauusd---ai/logo.png" alt="ZAcademy AI" class="mx-auto mb-8 w-40 logo-glow">
+
+    <h1 class="text-4xl md:text-6xl font-bold mb-6 gradient-text">
+      ZAcademy AI XAUUSD Engine
+    </h1>
+
+    <p class="text-gray-400 text-lg md:text-xl mb-8">
+      Structured Risk. Quantitative Edge.
+      1% Fixed Risk Model • Multi-Timeframe Engine • Institutional Framework
+    </p>
+
+    <div class="flex justify-center gap-4">
+      <a href="https://t.me/Zacademysignal_bot" target="_blank"
+        class="glow-button text-black px-8 py-3 rounded-lg font-semibold">
+        Launch AI Engine
+      </a>
+
+      <a href="#pricing"
+        class="border border-primary px-6 py-3 rounded-lg hover:bg-primary hover:text-black transition">
+        Upgrade to Pro
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- FREE VS PRO -->
+<section class="py-20 px-6">
+  <div class="max-w-5xl mx-auto text-center">
+    <h2 class="text-3xl font-bold mb-12 gradient-text">Free vs Pro Comparison</h2>
+
+    <div class="overflow-x-auto glass-card p-6 rounded-xl">
+      <table class="w-full text-left text-gray-300">
+        <thead>
+          <tr class="text-primary">
+            <th class="py-3">Feature</th>
+            <th>Free</th>
+            <th>Pro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>✔</td><td>✔</td></tr>
+          <tr><td>Stop Loss</td><td>✔</td><td>✔</td></tr>
+          <tr><td>Take Profit 1</td><td>✔</td><td>✔</td></tr>
+          <tr><td>Take Profit 2</td><td>❌</td><td>✔</td></tr>
+          <tr><td>Risk : Reward</td><td>❌</td><td>✔</td></tr>
+          <tr><td>AI Confidence Meter</td><td>❌</td><td>✔</td></tr>
+          <tr><td>Entry Logic Detail</td><td>❌</td><td>✔</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
 
 <!-- HERO -->
 <section class="min-h-screen flex items-center justify-center px-6">
