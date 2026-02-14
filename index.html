@@ -1,23 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+<style>
+  body {
+    background: radial-gradient(circle at top, #0b1224 0%, #050816 60%);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 15px rgba(34,211,238,0.6);
+  }
+
+  .glow-box {
+    box-shadow: 0 0 25px rgba(168,85,247,0.25);
+  }
+</style>
 <head>
   <meta charset="UTF-8">
   <title>XAUUSD AI Trading System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: "#00E5FF",
-            darkbg: "#0B0F19",
-            cardbg: "#131A2A"
-          }
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: "#22D3EE",      // Cyan neon
+          secondary: "#A855F7",    // Purple neon
+          darkbg: "#050816",       // Deep dark blue
+          cardbg: "#0B1224"        // Futuristic panel
         }
       }
     }
-  </script>
+  }
+</script>
 </head>
 <body class="bg-darkbg text-white font-sans">
 
@@ -25,7 +39,8 @@
 <section class="min-h-screen flex items-center justify-center px-6">
   <div class="max-w-4xl text-center">
     <h1 class="text-4xl md:text-6xl font-bold mb-6">
-      AI-Powered <span class="text-primary">XAUUSD</span> Trading System
+      ZAcademy <span class="text-secondary glow-text">AI</span> 
+<span class="text-primary glow-text">XAUUSD</span> Trading System
     </h1>
     <p class="text-gray-400 text-lg md:text-xl mb-8">
       Structured Risk. Quantitative Edge.  
@@ -61,7 +76,7 @@
     <h2 class="text-3xl font-bold mb-12">January 2026 Performance</h2>
     <div class="grid md:grid-cols-5 gap-6">
 
-      <div class="p-6 bg-darkbg rounded-xl">
+      <div class="p-6 bg-darkbg rounded-xl glow-box">
         <p class="text-gray-400">Trades</p>
         <h3 class="text-2xl font-bold">100</h3>
       </div>
@@ -101,7 +116,7 @@
         <p class="text-gray-400">Fixed capital allocation per trade. No over-leverage.</p>
       </div>
 
-      <div class="bg-cardbg p-8 rounded-xl">
+      <div class="bg-cardbg p-8 rounded-xl glow-box">
         <h3 class="text-xl font-semibold mb-4 text-primary">Multi-Timeframe Logic</h3>
         <p class="text-gray-400">Higher timeframe trend + lower timeframe precision entry.</p>
       </div>
@@ -119,7 +134,7 @@
   <div class="max-w-4xl mx-auto text-center">
     <h2 class="text-3xl font-bold mb-12">Pricing</h2>
 
-    <div class="bg-darkbg p-10 rounded-xl">
+    <div class="bg-darkbg p-10 rounded-xl glow-box">
       <h3 class="text-2xl font-bold mb-4 text-primary">Pro AI Engine</h3>
       <p class="text-gray-400 mb-6">
         Real-time XAUUSD data • Dynamic MTF • Structured 1% Risk Model
@@ -148,6 +163,8 @@
 
 <!-- FOOTER -->
 <footer class="py-10 text-center text-gray-500 text-sm">
+  © 2026 ZAcademy AI Trading — XAUUSD Forex System  
+  <br>
   Trading involves risk. Past performance does not guarantee future results.
 </footer>
 
