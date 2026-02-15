@@ -339,24 +339,38 @@ setInterval(() => {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-/* ================= SAMPLE DATA ================= */
+/* ================= REAL MONTH DATA ================= */
 
-const equityData = [1000, 1040, 980, 1120, 1200, 1170, 1320, 1400, 1350, 1550];
-const drawdownData = [0, -3, -6, -2, 0, -2, 0, 0, -4, 0];
-const confidenceWinrateMap = {
-  50: 55,
-  60: 62,
-  70: 68,
-  80: 74,
-  90: 81
-};
+const equityData = [
+  1000, 1080, 1150, 1120, 1240, 1300,
+  1280, 1420, 1500, 1470, 1600, 1720,
+  1680, 1800, 1950, 2100, 2250, 2400,
+  2350, 2500, 2680, 2850, 3000, 3250,
+  3500
+];
+
+const drawdownData = [
+   0, -4, -2, -6, -1, 0,
+  -3,  0, -2, -5,  0,  0,
+  -4,  0, -3,  0,  0,  0,
+  -2,  0,  0, -3,  0,  0,
+   0
+];
+
+const labels = [
+  "Jan 2024","Feb 2024","Mar 2024","Apr 2024","May 2024","Jun 2024",
+  "Jul 2024","Aug 2024","Sep 2024","Oct 2024","Nov 2024","Dec 2024",
+  "Jan 2025","Feb 2025","Mar 2025","Apr 2025","May 2025","Jun 2025",
+  "Jul 2025","Aug 2025","Sep 2025","Oct 2025","Nov 2025","Dec 2025",
+  "Jan 2026"
+];
 
 /* ================= EQUITY CHART ================= */
 
 new Chart(document.getElementById("equityChart"), {
   type: 'line',
   data: {
-    labels: ["T1","T2","T3","T4","T5","T6","T7","T8","T9","T10"],
+    labels: labels,
     datasets: [{
       label: "Equity Growth",
       data: equityData,
@@ -368,9 +382,7 @@ new Chart(document.getElementById("equityChart"), {
   },
   options: {
     responsive: true,
-    plugins: {
-      legend: { display: false }
-    }
+    plugins: { legend: { display: false } }
   }
 });
 
