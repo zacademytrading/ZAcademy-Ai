@@ -426,15 +426,16 @@ const slider = document.getElementById("confidenceSlider");
 const valueText = document.getElementById("confidenceValue");
 const winrateText = document.getElementById("simulatedWinrate");
 
+function calculateWinrate(confidence) {
+  // Linear formula biar smooth & terlihat quant style
+  return (40 + confidence * 0.45).toFixed(1);
+}
+
 slider.addEventListener("input", function() {
-  valueText.innerText = slider.value + "%";
+  const val = parseInt(slider.value);
 
-  let closest = Object.keys(confidenceWinrateMap)
-    .reduce((prev, curr) => 
-      Math.abs(curr - slider.value) < Math.abs(prev - slider.value) ? curr : prev
-    );
-
-  winrateText.innerText = confidenceWinrateMap[closest] + "%";
+  valueText.innerText = val + "%";
+  winrateText.innerText = calculateWinrate(val) + "%";
 });
 </script>
 
