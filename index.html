@@ -284,6 +284,134 @@ setInterval(() => {
 }, 2500);
 </script>
 
+  <!-- ================= PERFORMANCE DASHBOARD ================= -->
+<div class="divider-line"></div>
+
+<section class="py-20 px-6">
+  <div class="max-w-6xl mx-auto text-center">
+
+    <h2 class="text-3xl font-bold mb-12 gradient-text">
+      📊 ZAcademy Performance Intelligence
+    </h2>
+
+    <!-- CONFIDENCE FILTER -->
+    <div class="glass-card p-8 rounded-xl mb-12">
+      <h3 class="text-xl mb-4 text-primary font-semibold">
+        🎛 Confidence Simulator
+      </h3>
+
+      <label class="block mb-2 text-gray-400">
+        Select Minimum Confidence (%)
+      </label>
+
+      <input type="range" min="50" max="90" value="60" id="confidenceSlider"
+        class="w-full mb-4">
+
+      <p class="text-lg">
+        Filter: <span id="confidenceValue" class="text-primary font-bold">60%</span>
+      </p>
+
+      <p class="mt-4 text-gray-400">
+        Estimated Winrate:
+        <span id="simulatedWinrate" class="text-green-400 font-bold">62%</span>
+      </p>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="grid md:grid-cols-2 gap-12">
+
+      <div class="glass-card p-6 rounded-xl">
+        <h3 class="text-lg mb-4 text-primary">📈 Equity Curve</h3>
+        <canvas id="equityChart"></canvas>
+      </div>
+
+      <div class="glass-card p-6 rounded-xl">
+        <h3 class="text-lg mb-4 text-primary">📉 Drawdown</h3>
+        <canvas id="drawdownChart"></canvas>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- CHART JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+/* ================= SAMPLE DATA ================= */
+
+const equityData = [1000, 1040, 980, 1120, 1200, 1170, 1320, 1400, 1350, 1550];
+const drawdownData = [0, -3, -6, -2, 0, -2, 0, 0, -4, 0];
+const confidenceWinrateMap = {
+  50: 55,
+  60: 62,
+  70: 68,
+  80: 74,
+  90: 81
+};
+
+/* ================= EQUITY CHART ================= */
+
+new Chart(document.getElementById("equityChart"), {
+  type: 'line',
+  data: {
+    labels: ["T1","T2","T3","T4","T5","T6","T7","T8","T9","T10"],
+    datasets: [{
+      label: "Equity Growth",
+      data: equityData,
+      borderColor: "#22D3EE",
+      backgroundColor: "rgba(34,211,238,0.1)",
+      fill: true,
+      tension: 0.4
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false }
+    }
+  }
+});
+
+/* ================= DRAWDOWN CHART ================= */
+
+new Chart(document.getElementById("drawdownChart"), {
+  type: 'bar',
+  data: {
+    labels: ["T1","T2","T3","T4","T5","T6","T7","T8","T9","T10"],
+    datasets: [{
+      label: "Drawdown %",
+      data: drawdownData,
+      backgroundColor: "#A855F7"
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false }
+    }
+  }
+});
+
+/* ================= SIMULATOR ================= */
+
+const slider = document.getElementById("confidenceSlider");
+const valueText = document.getElementById("confidenceValue");
+const winrateText = document.getElementById("simulatedWinrate");
+
+slider.addEventListener("input", function() {
+  valueText.innerText = slider.value + "%";
+
+  let closest = Object.keys(confidenceWinrateMap)
+    .reduce((prev, curr) => 
+      Math.abs(curr - slider.value) < Math.abs(prev - slider.value) ? curr : prev
+    );
+
+  winrateText.innerText = confidenceWinrateMap[closest] + "%";
+});
+</script>
+
 </body>
 </html>
 
