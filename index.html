@@ -138,15 +138,6 @@
     100% { background-position: 300% }
   }
 
-  @keyframes marquee {
-    0% { transform: translateX(100%) }
-    100% { transform: translateX(-100%) }
-  }
-
-  .animate-marquee {
-    display: inline-block;
-    animation: marquee 25s linear infinite;
-  }
 </style>
 
 <head>
@@ -396,16 +387,6 @@ BUILT FOR SERIOUS TRADERS — NOT SIGNAL CHASERS
 
 <div class="divider-line"></div>
 
-<!-- TRADE TICKER -->
-<section class="py-6 bg-darkbg overflow-hidden">
-  <div class="whitespace-nowrap animate-marquee text-primary text-sm py-2">
-    🔥 BUY XAUUSD @2031.20 ✔ TP1 HIT —
-    SELL XAUUSD @2040.50 ✔ SL HIT —
-    BUY XAUUSD @2033.10 ✔ TP2 HIT —
-    SELL XAUUSD @2045.20 ✔ TP1 HIT —
-  </div>
-</section>
-
 <script>
 let count = 128;
 setInterval(() => {
@@ -413,12 +394,33 @@ setInterval(() => {
   document.getElementById("userCount").innerText = count;
 }, 5000);
 
-// Fake Live Price
-setInterval(() => {
-  let base = 2035;
-  let random = (Math.random() * 5).toFixed(2);
-  document.getElementById("livePrice").innerText = (base + parseFloat(random)).toFixed(2);
-}, 3000);
+// ===== REALISTIC FAKE XAUUSD ENGINE =====
+
+let fakePrice = 2038.20;
+let directionBias = 1;
+
+function updateFakePrice() {
+
+  let movement = (Math.random() * 0.35);
+
+  // 12% chance ganti arah
+  if (Math.random() < 0.12) {
+    directionBias *= -1;
+  }
+
+  fakePrice += directionBias * movement;
+
+  // Batasi range biar realistis
+  if (fakePrice > 2055) directionBias = -1;
+  if (fakePrice < 2025) directionBias = 1;
+
+  fakePrice = parseFloat(fakePrice.toFixed(2));
+
+  document.getElementById("livePrice").innerText = fakePrice;
+}
+
+updateFakePrice();
+setInterval(updateFakePrice, 3000);
 
 // AI Typing Simulation
 const messages = [
