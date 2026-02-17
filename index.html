@@ -20,12 +20,12 @@
   }
 
   .hero-subtext {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #cbd5e1;
-    line-height: 1.8;
-    letter-spacing: 0.2px;
-  }
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+  text-shadow: 0 0 20px rgba(34,211,238,0.15);
+}
 
   .text-gray-400 {
     color: #b6c2d9 !important;
@@ -162,17 +162,30 @@
 <body class="bg-darkbg text-white font-sans">
 
 <!-- STATUS BAR -->
-<div class="status-bar py-2 text-center">
-🟢 AI Engine: ACTIVE | 📡 Market Feed: Connected | 🧠 Model Confidence: Stable | ⚡ Session Mode: Live
+<div class="status-bar py-3">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs md:text-sm tracking-wide text-white/80">
+
+    <div class="flex items-center gap-3 mb-2 md:mb-0">
+      <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+      <span class="font-semibold text-green-400">AI ENGINE ACTIVE</span>
+    </div>
+
+    <div class="flex items-center gap-6 text-white/70">
+      <span>📡 Market Feed Connected</span>
+      <span>🧠 Model Stability: 97%</span>
+      <span>⚡ Session: London Volatility</span>
+    </div>
+
+  </div>
 </div>
 
 <!-- HERO -->
 <section class="min-h-screen flex items-center justify-center px-6">
   <div class="max-w-4xl text-center">
 
-    <p class="text-sm text-primary mb-4 tracking-widest">
-      ⚡ LIVE AI ENGINE RUNNING — REAL-TIME DATA ACTIVE
-    </p>
+    <p class="text-xs md:text-sm uppercase tracking-[0.3em] mb-6 text-white/60 font-medium">
+  <span class="text-primary font-semibold">Quant Engine v4.2</span> — Real-Time Institutional Data Processing
+</p>
 
     <p class="text-xs text-primary mb-4">
 🔥 <span id="userCount">128</span> Traders Using ZAcademy AI Now
