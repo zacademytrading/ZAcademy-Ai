@@ -284,11 +284,12 @@ export default function Home() {
     if (symbolMatch) { const sym = symbolMatch[0].toUpperCase(); if (!['HALO', 'SAYA', 'HELLO'].includes(sym)) { setActiveSymbol(sym); setHistoryData([]); fetch(`/api/market/history?symbol=${sym}`).then(r => r.json()).then(data => { if (Array.isArray(data) && data.length > 0) setHistoryData(data); else setActiveSymbol(null); }).catch(() => setActiveSymbol(null)); } else { setActiveSymbol(null); } } else { setActiveSymbol(null); }
     try {
       const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.images ? [{ type: 'text', text: m.content }, ...m.images.map((img: string) => ({ type: 'image_url', image_url: { url: img } }))] : m.content })), model: selectedModel, settings }) });
-      const data = await res.json(); if (!res.ok) throw new Error(data.error);
+      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `Server error (${res.status})`); }
+      const data = await res.json();
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content || '', isTyping: true };
       const updatedMessages = [...newMessages, aiMsg]; setMessages(updatedMessages);
       const sessionId = activeSession || Date.now().toString(); saveChat({ id: sessionId, title: text.substring(0,30), messages: updatedMessages }); setActiveSession(sessionId);
-    } catch (err: any) { setMessages(p => [...p, { id: Date.now().toString(), role: 'assistant', content: 'Connection error.' }]); } finally { setIsLoading(false); }
+    } catch (err: any) { setMessages(p => [...p, { id: Date.now().toString(), role: 'assistant', content: `⚠️ System Alert: ${err.message || 'Connection lost'}. Please check your internet and try again.` }]); } finally { setIsLoading(false); }
   };
 
   const themeVars = settings.theme === 'dark' ? { bg: '#131314', sidebar: '#1e1f20', border: '#333538', text: '#e3e3e3', textMuted: '#8e918f', inputBg: '#1e1f20', userBubble: '#282a2c', aiBubble: 'transparent', hover: '#333538' } : { bg: '#ffffff', sidebar: '#f0f4f9', border: '#e3e3e3', text: '#1f1f1f', textMuted: '#444746', inputBg: '#f0f4f9', userBubble: '#f0f4f9', aiBubble: 'transparent', hover: '#e3e3e3' };
@@ -458,8 +459,15 @@ export default function Home() {
               <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: 840, margin: '0 auto', padding: 20 }}>
                 <h1 style={{ fontSize: 44, fontWeight: 600, textAlign: 'center', marginBottom: 40, background: 'linear-gradient(90deg, #c084fc, #ec4899, #f43f5e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{settings.language === 'English' ? 'Hello' : 'Halo'}, {user?.name?.split(' ')[0]}<br/><span style={{ color: themeVars.textMuted, fontSize: 32 }}>{settings.language === 'English' ? 'How can ZENIX help you today?' : 'Ada yang bisa ZENIX bantu hari ini?'}</span></h1>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 40 }}>
-                  {[{ icon: <Activity size={16} />, text: settings.language === 'English' ? "XAUUSD SMC analysis" : "Analisa SMC XAUUSD" }].map((chip, idx) => (
-                    <button key={idx} onClick={() => handleSubmit(null, chip.text)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px', background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 20, color: themeVars.text }}>{chip.icon} {chip.text}</button>
+                  {[
+                    { icon: <Activity size={16} color="#c084fc" />, text: settings.language === 'English' ? "XAUUSD SMC analysis" : "Analisa SMC XAUUSD" },
+                    { icon: <BarChart2 size={16} color="#ec4899" />, text: settings.language === 'English' ? "Crypto Fear & Greed sentiment" : "Gimana sentimen Fear & Greed Crypto?" },
+                    { icon: <Layers size={16} color="#f43f5e" />, text: settings.language === 'English' ? "Trading plan for $500 capital" : "Buat trading plan modal $500" },
+                    { icon: <Globe size={16} color="#3b82f6" />, text: settings.language === 'English' ? "Latest macro trading news" : "Cek berita makro ekonomi terkini" }
+                  ].map((chip, idx) => (
+                    <button key={idx} onClick={() => handleSubmit(null, chip.text)} className="smooth-transition" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px', background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 20, color: themeVars.text, cursor: 'pointer', fontSize: 14 }} onMouseOver={e => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)'} onMouseOut={e => e.currentTarget.style.background = themeVars.inputBg}>
+                      {chip.icon} {chip.text}
+                    </button>
                   ))}
                 </div>
                 {renderInputArea(true)}

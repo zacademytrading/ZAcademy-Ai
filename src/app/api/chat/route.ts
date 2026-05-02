@@ -72,6 +72,7 @@ async function callGroq(messages: any[], model: string, temperature: number): Pr
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    console.error('[GROQ ERROR]', err);
     throw new Error(err?.error?.message || `Groq HTTP ${res.status}`);
   }
 
