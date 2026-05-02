@@ -2,6 +2,7 @@
 // Backend AI Chat — Groq (primary) | ZAcademy V2
 
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase-client';
 import { ZACADEMY_MODELS, type ModelKey } from '@/lib/models';
 import { getMarketData, detectAssetType } from '@/lib/market-data';
 import { getLatestTradingNews } from '@/lib/news';
@@ -36,6 +37,14 @@ If user uploads a chart or asks for multi-timeframe:
 1. HTF (Daily/H4): Determine macro bias (Institutional Order Flow).
 2. LTF (M15/M5): Look for entry patterns (e.g., liquidity sweep in London/New York session, then enter at M5 FVG).
 
+[SMC VISION PROTOCOL - MANDATORY FOR IMAGES]
+If the user uploads a chart screenshot, you MUST:
+1. Identify Market Structure: Locate the most recent BOS (Break of Structure) or ChoCh (Change of Character).
+2. Spot Liquidity: Point out areas of Equal Highs/Lows or previous session highs/lows that have been swept.
+3. Detect Imbalances: Highlight specific Fair Value Gaps (FVG) or Volume Imbalances visible on the chart.
+4. Locate Supply/Demand: Find the valid Order Block (OB) or Breaker Block that lead to the current move.
+5. Precision Analysis: Don't just describe the colors; analyze the price action and candle behavior.
+
 MANDATORY OUTPUT RULES:
 1. Always include disclaimer: "DISCLAIMER: Trading involves high risk. This is not financial advice."
 2. If providing a signal, format MUST be:
@@ -53,6 +62,24 @@ const GROQ_MODELS: Record<ModelKey, string> = {
   'zenix-think': 'llama-3.3-70b-versatile',
   'zenix-fast': 'llama-3.1-8b-instant',
 };
+
+async function getUserIntelligence(userId: string): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('personal_intelligence')
+      .eq('id', userId)
+      .maybeSingle(); // Menggunakan maybeSingle agar tidak error jika data kosong
+    
+    if (error) {
+      console.warn('[Supabase Intelligence Error]', error.message);
+      return '';
+    }
+    return data?.personal_intelligence || '';
+  } catch (e) {
+    return '';
+  }
+}
 
 async function callGroq(messages: any[], model: string, temperature: number): Promise<string> {
   const res = await fetch(`${GROQ_BASE}/chat/completions`, {
@@ -128,13 +155,22 @@ function extractSymbol(text: string): string | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, model, settings } = await req.json();
+    const { messages, model, settings, userId } = await req.json();
     const modelKey = (model as ModelKey) || 'zenix-think';
     const modelConfig = ZACADEMY_MODELS[modelKey];
     const groqModel = GROQ_MODELS[modelKey] || 'llama-3.3-70b-versatile';
 
     const lang = settings?.language || 'English';
-    const personalIntel = settings?.personalIntelligence || '';
+    let personalIntel = settings?.personalIntelligence || '';
+
+    /* Sementara dinonaktifkan untuk debugging 
+    if (userId) {
+      const dbIntel = await getUserIntelligence(userId);
+      if (dbIntel && !personalIntel.includes(dbIntel)) {
+        personalIntel = dbIntel + (personalIntel ? "\n" + personalIntel : "");
+      }
+    }
+    */
 
     let dynamicPrompt = `${SYSTEM_PROMPT}\n\nIMPORTANT: You MUST respond in ${lang}.\nCharacter: Professional, objective, and highly intelligent.`;
     if (personalIntel) dynamicPrompt += `\n\n[INSTRUKSI PERSONAL]: ${personalIntel}`;
@@ -144,7 +180,21 @@ export async function POST(req: NextRequest) {
     
     let marketContext = '';
     let smcContext = '';
+    let newsContext = '';
     const sym = extractSymbol(userQuery);
+
+    // Deep Search Analysis: Jika ada simbol atau tanya berita
+    if (sym || userQuery.toLowerCase().includes('berita') || userQuery.toLowerCase().includes('news') || userQuery.toLowerCase().includes('sentimen')) {
+      try {
+        const searchQuery = sym ? `${sym} trading news sentiment 2026` : userQuery;
+        const news = await fetchDuckDuckGoNews(searchQuery);
+        if (news) {
+          newsContext = `\n\n[BERITA & SENTIMEN TERKINI]\n${news}`;
+        }
+      } catch (e) {
+        console.error('[News Search Error]', e);
+      }
+    }
 
     if (sym) {
       try {
@@ -216,7 +266,7 @@ export async function POST(req: NextRequest) {
     };
 
     const apiMessages = sanitizeMessages([
-      { role: 'system', content: dynamicPrompt + marketContext + smcContext },
+      { role: 'system', content: dynamicPrompt + marketContext + smcContext + newsContext },
       ...messages
     ]);
 

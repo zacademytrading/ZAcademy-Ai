@@ -1,0 +1,166 @@
+{
+  "/Users/ZENIX/Desktop/zacademy-ai/test-api.mjs": {
+    "mtime": 1777138037.2973835,
+    "hash": "df61fdf2aede8ced01a8b692b8522c82"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/test-ai-features.mjs": {
+    "mtime": 1777152272.3037372,
+    "hash": "4c13f2f100c9928d956179ad492b6328"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/test-chat.mjs": {
+    "mtime": 1777138143.20249,
+    "hash": "7a28fd483b390202b0323965ec0b81e1"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/next-env.d.ts": {
+    "mtime": 1777719961.675988,
+    "hash": "2a74d3909800ca5467fa83b0ab4a4890"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/test-news.mjs": {
+    "mtime": 1777138138.8221931,
+    "hash": "c1584c7d5c3cb4d37a03a8ecc47c5a7a"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/test-suite.mjs": {
+    "mtime": 1777143758.765649,
+    "hash": "62e93503426f402554a10f68e590ca1f"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/eslint.config.mjs": {
+    "mtime": 1776166657.1098993,
+    "hash": "dfa1f5f6a7037bf39dc510f30b180002"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/test-bbca.mjs": {
+    "mtime": 1777144610.5217772,
+    "hash": "8e9190fd74f976e03e519f32722b668c"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/next.config.ts": {
+    "mtime": 1777473291.5736806,
+    "hash": "cf14a6ea1582059c3d140cf756b9439c"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/layout.tsx": {
+    "mtime": 1777473305.6922512,
+    "hash": "9fec835e4596b879c8ce5eaa6561d240"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/page.tsx": {
+    "mtime": 1777724072.994402,
+    "hash": "f2234bcfcf14712495bd5096a846c4ad"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/admin/logs/page.tsx": {
+    "mtime": 1777719627.8236978,
+    "hash": "359b0807006ef6be17e7705ffe45efc5"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/chat/route.ts": {
+    "mtime": 1777724111.5483105,
+    "hash": "1dc86987b36efc32534f27de53df8447"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/auth/route.ts": {
+    "mtime": 1776846659.520217,
+    "hash": "c25d7ac68fbe9db6503de093107fa1c7"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/admin/logs/route.ts": {
+    "mtime": 1777719606.62318,
+    "hash": "5ddb0d42017e295511e0e6a682ea63bc"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/user/settings/route.ts": {
+    "mtime": 1776846697.3092608,
+    "hash": "d3b2d396c3087fd32eac19ba0f2b3355"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/test-ai/route.ts": {
+    "mtime": 1776841873.1974878,
+    "hash": "374cbe715469f92b1f011955a824debf"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/chats/route.ts": {
+    "mtime": 1776852012.9446568,
+    "hash": "509b92da591abd24e488d56243b1cb5e"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/market/route.ts": {
+    "mtime": 1776771709.2424717,
+    "hash": "ed1011b0abbf608ddfca28bec55dff75"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/app/api/market/history/route.ts": {
+    "mtime": 1777144128.1892245,
+    "hash": "17f14cdadfbad6bfedcef42f4c4a3961"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/components/TradingChart.tsx": {
+    "mtime": 1777307527.1174273,
+    "hash": "ee361bd3d1f55cc7051b4c2c1a65a604"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/components/ui/SettingsModal.tsx": {
+    "mtime": 1777721896.3094492,
+    "hash": "14fffc909d6ee1b78088ae01fb04bce4"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/components/auth/AuthModal.tsx": {
+    "mtime": 1777720862.2492402,
+    "hash": "b98540b556b9825fba54e959598cfa9d"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/web-search.ts": {
+    "mtime": 1776167162.3427963,
+    "hash": "25059859056538956ae6e9a7fc4793e4"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/error-service.ts": {
+    "mtime": 1777719532.6844752,
+    "hash": "3355cd617e53bb644edabeedf39e9f76"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/news.ts": {
+    "mtime": 1777152097.519356,
+    "hash": "7460063ebb5b1fd84952cbb798d07c8d"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/market-data.ts": {
+    "mtime": 1777145381.7009933,
+    "hash": "05f2a1b82f1ac7f8149632a6905e0d80"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/smc-detector.ts": {
+    "mtime": 1777719387.9608517,
+    "hash": "06dc67ce2aa8d85d9fe9793d6eec3465"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/supabase-client.ts": {
+    "mtime": 1777662154.7929375,
+    "hash": "bffb04fd560e4d5d3bf847250f7b40b0"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/models.ts": {
+    "mtime": 1776850081.117698,
+    "hash": "614b47fd76bd7c118dcf7d58550239a9"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/src/lib/db.ts": {
+    "mtime": 1776846636.566063,
+    "hash": "4a41540d10306cc467f109367d7acf75"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/README.md": {
+    "mtime": 1776166657.1091506,
+    "hash": "f15aaa42d5d299d091b1171097ea56ad"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/AGENTS.md": {
+    "mtime": 1776166781.006472,
+    "hash": "9e09241799026ac05be315a2f0b50055"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/CLAUDE.md": {
+    "mtime": 1776166781.006714,
+    "hash": "5c27369b226fcf2be8a6cfe52224e767"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/public/logo-dark.jpg": {
+    "mtime": 1776851308.0,
+    "hash": "dab9bafd9451093ee963f6a723ca7a1c"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/public/file.svg": {
+    "mtime": 1776166657.1117392,
+    "hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/public/vercel.svg": {
+    "mtime": 1776166657.1125011,
+    "hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/public/next.svg": {
+    "mtime": 1776166657.1123233,
+    "hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/public/globe.svg": {
+    "mtime": 1776166657.1125543,
+    "hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/public/window.svg": {
+    "mtime": 1776166657.1128123,
+    "hash": "a2760511c65806022ad20adf74370ff3"
+  },
+  "/Users/ZENIX/Desktop/zacademy-ai/public/logo-light.jpg": {
+    "mtime": 1776852014.0,
+    "hash": "2cbfe2ec54b7fb403e334c0b10a63a98"
+  }
+}

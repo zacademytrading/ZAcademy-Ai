@@ -111,5 +111,29 @@ export const supabaseDb = {
     if (error) {
       console.error('Error deleting chat:', error);
     }
+  },
+
+  async getUserProfile(userId: string) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      if (error.code !== 'PGRST116') console.error('Error fetching profile:', error);
+      return null;
+    }
+    return data;
+  },
+
+  async updateUserProfile(userId: string, profile: any) {
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: userId, ...profile }, { onConflict: 'id' });
+      
+    if (error) {
+      console.error('Error updating profile:', error);
+    }
   }
 };

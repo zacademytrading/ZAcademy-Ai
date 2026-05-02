@@ -4,6 +4,9 @@ import { Send, Plus, Settings, Camera, ChevronDown, Zap, BarChart2, Activity, Me
 import { ZACADEMY_MODELS, type ModelKey } from '@/lib/models';
 
 import { SettingsModal } from '@/components/ui/SettingsModal';
+import { InputSection } from '@/components/chat/InputSection';
+import { Sidebar } from '@/components/chat/Sidebar';
+import { MessageList } from '@/components/chat/MessageList';
 import { supabase, supabaseDb, signInWithEmail, signUpWithEmail, signInWithGoogle, resetPasswordForEmail } from '@/lib/supabase-client';
 
 interface Message { id: string; role: 'user' | 'assistant'; content: string; image?: string; images?: string[]; isTyping?: boolean; }
@@ -14,20 +17,6 @@ interface User { id: string; email: string; name: string; settings: UserSettings
 function cleanAIResponse(text: string): string {
   return text.trim();
 }
-
-const Typewriter = ({ text, renderer }: { text: string, renderer?: (t: string) => React.ReactNode }) => {
-  const [displayedText, setDisplayedText] = useState('');
-  useEffect(() => {
-    let i = 0; setDisplayedText('');
-    const interval = setInterval(() => {
-      setDisplayedText(text.slice(0, i + 1)); i++;
-      if (i >= text.length) clearInterval(interval);
-    }, 10);
-    return () => clearInterval(interval);
-  }, [text]);
-  if (renderer) return <>{renderer(displayedText)}</>;
-  return <div style={{ whiteSpace: 'pre-line' }}>{displayedText}</div>;
-};
 
 const GlobalStyle = () => (
   <style>{`
@@ -309,7 +298,7 @@ export default function Home() {
     setMessages(newMessages); setInput(''); setSelectedImages([]); setIsLoading(true);
 
     try {
-      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.images ? [{ type: 'text', text: m.content }, ...m.images.map((img: string) => ({ type: 'image_url', image_url: { url: img } }))] : m.content })), model: selectedModel, settings }) });
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.images ? [{ type: 'text', text: m.content }, ...m.images.map((img: string) => ({ type: 'image_url', image_url: { url: img } }))] : m.content })), model: selectedModel, settings, userId: user.id }) });
       if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `Server error (${res.status})`); }
       const data = await res.json();
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content || '', isTyping: true };
@@ -320,118 +309,24 @@ export default function Home() {
 
   const themeVars = settings.theme === 'dark' ? { bg: '#131314', sidebar: '#1e1f20', border: '#333538', text: '#e3e3e3', textMuted: '#8e918f', inputBg: '#1e1f20', userBubble: '#282a2c', aiBubble: 'transparent', hover: '#333538' } : { bg: '#ffffff', sidebar: '#f0f4f9', border: '#e3e3e3', text: '#1f1f1f', textMuted: '#444746', inputBg: '#f0f4f9', userBubble: '#f0f4f9', aiBubble: 'transparent', hover: '#e3e3e3' };
 
-  const mdToHtml = (raw: string): string => {
-    if (!raw) return '';
-    let t = raw;
-    // Protect code blocks
-    const codeBlocks: string[] = [];
-    t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-      const label = lang ? `<span class="code-lang">${lang.toUpperCase()}</span>` : '';
-      codeBlocks.push(`<pre class="ai-pre">${label}<code>${code.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
-      return `%%CODE_${codeBlocks.length - 1}%%`;
-    });
-    // Headings
-    t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    t = t.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    t = t.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-    // Bold & italic
-    t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    t = t.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
-    // Inline code
-    t = t.replace(/`([^`]+)`/g, '<code class="ai-inline-code">$1</code>');
-    // HR
-    t = t.replace(/^---+$/gm, '<hr/>');
-    // Tables
-    t = t.replace(/((?:\|.+\|\n?)+)/g, (table) => {
-      const rows = table.trim().split('\n').filter(r => r.trim());
-      let html = '<div class="ai-table-wrap"><table>';
-      let headerDone = false;
-      rows.forEach(row => {
-        const cells = row.split('|').map(c => c.trim()).filter((_, i, a) => !(i === 0 && _ === '') && !(i === a.length-1 && _ === ''));
-        if (cells.every(c => /^[\-: ]+$/.test(c))) return;
-        if (!headerDone) { html += `<thead><tr>${cells.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`; headerDone = true; }
-        else html += `<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
-      });
-      html += '</tbody></table></div>';
-      return html;
-    });
-    // Numbered lists
-    t = t.replace(/((?:^\d+\. .+\n?)+)/gm, (block) => {
-      const items = block.trim().split('\n').map(l => l.replace(/^\d+\. /, '').trim());
-      return `<ol class="ai-ol">${items.map((item, i) => `<li><span class="ai-num">${i+1}</span><span>${item}</span></li>`).join('')}</ol>`;
-    });
-    // Bullet lists
-    t = t.replace(/((?:^[-*] .+\n?)+)/gm, (block) => {
-      const items = block.trim().split('\n').map(l => l.replace(/^[-*] /, '').trim());
-      return `<ul class="ai-ul">${items.map(item => `<li><span class="ai-dot"></span><span>${item}</span></li>`).join('')}</ul>`;
-    });
-    // Paragraphs: wrap non-tag lines
-    t = t.replace(/^(?!<[a-z%]).+$/gm, line => line.trim() ? `<p>${line}</p>` : '');
-    // Restore code blocks
-    t = t.replace(/%%CODE_(\d+)%%/g, (_, i) => codeBlocks[parseInt(i)]);
-    return t;
-  };
-
-  const renderMarkdown = (text: string) => {
-    if (!text) return null;
-    // Special card for trading signals
-    if (text.includes('⚡ SIGNAL:')) {
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      const title = lines.find(l => l.includes('⚡ SIGNAL:'))?.replace('⚡ SIGNAL:', '').trim() || 'Trading Signal';
-      const isBullish = text.toLowerCase().includes('bullish') || text.toLowerCase().includes('buy');
-      const colorMain = isBullish ? '#10b981' : '#ef4444';
-      const colorBg = isBullish ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-      return (
-        <div style={{ margin: '24px 0', borderRadius: 20, overflow: 'hidden', border: `1px solid ${colorMain}`, background: themeVars.inputBg, boxShadow: isBullish ? '0 0 15px rgba(16,185,129,0.3)' : '0 0 15px rgba(239,68,68,0.3)' }}>
-          <div style={{ padding: '16px 20px', background: `linear-gradient(135deg, ${colorBg}, transparent)`, borderBottom: `1px solid rgba(255,255,255,0.05)`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, color: themeVars.text, fontSize: 16 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: colorMain, color: '#fff' }}><Activity size={16} /></span>{title}</div>
-            <div style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12, background: colorMain, color: '#fff', textTransform: 'uppercase' }}>{isBullish ? 'BULLISH' : 'BEARISH'}</div>
-          </div>
-          <div style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-            {lines.filter(l => !l.includes('⚡ SIGNAL:') && l.includes(':')).map((line, li) => {
-              const [label, ...rest] = line.split(':'); const val = rest.join(':').trim();
-              let valColor = themeVars.text;
-              if (/tp|target/i.test(label)) valColor = '#10b981';
-              if (/sl|invalidation/i.test(label)) valColor = '#ef4444';
-              return (
-                <div key={li} style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ fontSize: 11, color: themeVars.textMuted, textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>{label.replace(/[-*]/g,'').trim()}</div>
-                  <div style={{ fontSize: 15, fontFamily: 'monospace', fontWeight: 700, color: valColor }}>{val}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-    return <div className="ai-content" dangerouslySetInnerHTML={{ __html: mdToHtml(text) }} />;
-  };
-
-
   const renderInputArea = (isCentered: boolean) => (
+
     <div className={`input-wrapper ${isCentered ? 'centered' : 'bottom'}`} style={{ width: '100%', maxWidth: 800, margin: '0 auto', flexShrink: 0, zIndex: 10, position: 'relative' }}>
       {!isCentered && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: `linear-gradient(to top, ${themeVars.bg}, transparent)`, pointerEvents: 'none', zIndex: -1 }} />}
-      <div style={{ background: settings.theme === 'dark' ? 'rgba(30, 31, 32, 0.9)' : 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${themeVars.border}`, borderRadius: 32, padding: '14px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
-        {selectedImages.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, paddingBottom: 12, overflowX: 'auto' }}>
-            {selectedImages.map((img, i) => (
-              <div key={i} style={{ position: 'relative', flexShrink: 0 }}>
-                <img src={img} alt="preview" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 12, border: `1px solid ${themeVars.border}` }} />
-                <button onClick={() => setSelectedImages(prev => prev.filter((_, idx) => idx !== i))} style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', fontSize: 12 }}><X size={12} /></button>
-              </div>
-            ))}
-          </div>
-        )}
-        <textarea ref={textareaRef} value={input} onChange={e => { setInput(e.target.value); e.target.style.height = '44px'; e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; }} rows={1} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(null); } }} placeholder={settings.language === 'English' ? "Ask ZENIX AI..." : "Tanya ZENIX AI..."} disabled={isLoading} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: themeVars.text, fontSize: 'var(--font-md)', resize: 'none', lineHeight: 1.5, padding: '4px 4px 12px', minHeight: 44 }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', color: themeVars.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%' }}><Plus size={24} /></button>
-            <input type="file" ref={fileInputRef} onChange={handleImageChange} multiple accept="image/*" style={{ display: 'none' }} />
-            <button onClick={toggleListening} style={{ background: isListening ? 'rgba(239,68,68,0.15)' : 'none', border: 'none', color: isListening ? '#ef4444' : themeVars.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%' }}>{isListening ? <MicOff size={22} className="typing-dot" /> : <Mic size={22} />}</button>
-          </div>
-          <button onClick={() => handleSubmit(null)} disabled={isLoading || (!input.trim() && selectedImages.length === 0)} style={{ width: 44, height: 44, borderRadius: '50%', background: (input.trim() || selectedImages.length > 0) ? 'linear-gradient(135deg,#7c3aed,#a855f7)' : (settings.theme === 'dark' ? '#333538' : '#e3e3e3'), border: 'none', cursor: (input.trim() || selectedImages.length > 0) ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}><Send size={18} color={(input.trim() || selectedImages.length > 0) ? '#fff' : themeVars.textMuted} /></button>
-        </div>
-      </div>
+      <InputSection 
+        input={input}
+        setInput={setInput}
+        selectedImages={selectedImages}
+        setSelectedImages={setSelectedImages}
+        isLoading={isLoading}
+        isListening={isListening}
+        toggleListening={toggleListening}
+        handleSubmit={handleSubmit}
+        fileInputRef={fileInputRef}
+        textareaRef={textareaRef}
+        settings={settings}
+        themeVars={themeVars}
+      />
     </div>
   );
 
@@ -465,33 +360,24 @@ export default function Home() {
     <>
       <GlobalStyle />
       <div style={{ display: 'flex', height: '100vh', background: themeVars.bg, color: themeVars.text, overflow: 'hidden' }}>
-        <div className={`smooth-transition ${isMobile && sidebarOpen ? 'mobile-sidebar' : ''}`} style={{ width: sidebarOpen ? 280 : 0, background: themeVars.sidebar, borderRight: `1px solid ${themeVars.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 100 }}>
-          <div style={{ padding: '20px 16px' }}>
-            <button onClick={() => { setActiveSession(null); setMessages([]); }} style={{ width: sidebarOpen ? '100%' : '44px', height: '44px', borderRadius: '22px', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px' }}><Plus size={20} /><span>{settings.language === 'English' ? 'New Chat' : 'Chat Baru'}</span></button>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px' }}>
-            {groupedChats.map(([groupName, items]) => (
-              <div key={groupName} style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: themeVars.textMuted, padding: '10px 12px', textTransform: 'uppercase' }}>{settings.language === 'English' ? (groupName === 'Hari Ini' ? 'Today' : groupName === 'Kemarin' ? 'Yesterday' : groupName === '7 Hari Terakhir' ? 'Last 7 Days' : 'Older') : groupName}</div>
-                {items.map(c => (
-                  <div key={c.id} onClick={() => loadSession(c.id)} className={`sidebar-item ${activeSession === c.id ? 'active' : ''}`}><MessageSquare size={16} /><span style={{ flex: 1, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title || 'New Conversation'}</span><button onClick={(e) => deleteChat(e, c.id)} className="delete-icon" style={{ background: 'none', border: 'none', color: '#ef4444', padding: 4 }}><Trash2 size={14} /></button></div>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div style={{ padding: '16px', borderTop: `1px solid ${themeVars.border}` }}>
-            <div onClick={() => setProfileOpen(!profileOpen)} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '8px 12px', borderRadius: 16 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>{user?.name?.charAt(0)?.toUpperCase()}</div>
-              {sidebarOpen && <div style={{ flex: 1, overflow: 'hidden' }}><div style={{ fontSize: 14, fontWeight: 600 }}>{user?.name}</div><div style={{ fontSize: 12, color: themeVars.textMuted }}>Trading Account</div></div>}
-            </div>
-            {profileOpen && (
-              <div style={{ position: 'absolute', bottom: 70, left: 16, right: 16, background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 16, padding: '8px', zIndex: 200 }}>
-                <div onClick={() => { setSettingsOpen(true); setProfileOpen(false); }} className="sidebar-item"><Settings size={16} /><span>Settings</span></div>
-                <div onClick={handleLogout} className="sidebar-item" style={{ color: '#ef4444' }}><LogIn size={16} /><span>Logout</span></div>
-              </div>
-            )}
-          </div>
-        </div>
+        <Sidebar 
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          isMobile={isMobile}
+          activeSession={activeSession}
+          setActiveSession={setActiveSession}
+          setMessages={setMessages}
+          groupedChats={groupedChats}
+          loadSession={loadSession}
+          deleteChat={deleteChat}
+          user={user}
+          profileOpen={profileOpen}
+          setProfileOpen={setProfileOpen}
+          setSettingsOpen={setSettingsOpen}
+          handleLogout={handleLogout}
+          settings={settings}
+          themeVars={themeVars}
+        />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ display: 'flex', padding: '12px 24px', alignItems: 'center', justifyContent: 'space-between', background: themeVars.bg }}>
@@ -530,18 +416,11 @@ export default function Home() {
                 {renderInputArea(true)}
               </div>
             ) : (
-              <div style={{ maxWidth: 800, margin: '0 auto', width: '100%', padding: 20 }}>
-                {messages.map((msg, idx) => (
-                  <div key={msg.id} style={{ display: 'flex', gap: 16, marginBottom: 32, justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    {msg.role === 'assistant' && <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid #7c3aed' }}><img src="/logo-dark.jpg" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
-                    <div style={{ maxWidth: '85%', background: msg.role === 'user' ? themeVars.userBubble : themeVars.inputBg, padding: '16px 20px', borderRadius: 24, border: msg.role === 'assistant' ? `1px solid ${themeVars.border}` : 'none' }}>
-
-                      {msg.role === 'assistant' && msg.isTyping ? <Typewriter text={msg.content} renderer={renderMarkdown} /> : renderMarkdown(msg.content)}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+              <MessageList 
+                messages={messages} 
+                themeVars={themeVars} 
+                messagesEndRef={messagesEndRef} 
+              />
             )}
           </div>
           {messages.length > 0 && renderInputArea(false)}

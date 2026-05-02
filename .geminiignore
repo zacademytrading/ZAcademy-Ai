@@ -1,0 +1,16 @@
+# Ignore large/unnecessary files for AI
+node_modules/
+.next/
+dist/
+build/
+.git/
+*.log
+*.lock
+package-lock.json
+public/assets/
+graphify-out/
+.DS_Store
+*.png
+*.jpg
+*.svg
+*.mp4
