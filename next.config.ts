@@ -5,10 +5,8 @@ const nextConfig: NextConfig = {
     // Ignore type errors during build so Vercel deployment succeeds
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // Ignore ESLint errors during build
-    ignoreDuringBuilds: true,
-  },
+  // @ts-ignore: Next.js dev server property that might not be in types yet
+  allowedDevOrigins: ["192.168.18.24", "localhost"],
 };
 
 export default nextConfig;

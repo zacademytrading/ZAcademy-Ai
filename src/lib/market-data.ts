@@ -11,7 +11,7 @@ const TWELVE_API_KEYS = [
 ].filter(Boolean) as string[];
 
 // ─── YAHOO FINANCE TICKER MAP (for commodities not on free Twelve Data plan) ──
-const YAHOO_TICKER_MAP: Record<string, string> = {
+export const YAHOO_TICKER_MAP: Record<string, string> = {
   // Precious Metals
   'XAG': 'SI=F', 'XAGUSD': 'SI=F', 'SILVER': 'SI=F', 'PERAK': 'SI=F',
   'XPT': 'PL=F', 'PLATINUM': 'PL=F',
@@ -171,29 +171,45 @@ async function getYahooFinanceData(symbol: string, forceTicker?: string): Promis
   // Resolusi ticker: cek map dulu, lalu cek apakah format .JK langsung
   let yahooTicker = forceTicker || YAHOO_TICKER_MAP[upperSym];
   if (!yahooTicker) {
-    // Jika ticker berformat XXXX.JK langsung dari user
     if (upperSym.endsWith('.JK')) yahooTicker = upperSym;
+    else if (IDX_STOCKS.has(upperSym)) yahooTicker = upperSym + '.JK'; // Auto-fix missing .JK
     else return null;
   }
 
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?interval=1d&range=1d`;
+    console.log(`🌐 [Yahoo] Fetching ${yahooTicker}...`);
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+        'Connection': 'keep-alive'
       },
       // @ts-ignore
-      cache: 'no-store',
+      next: { revalidate: 60 }
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`❌ [Yahoo] ${yahooTicker} HTTP ${res.status}`);
+      return null;
+    }
     const json = await res.json();
     const result = json?.chart?.result?.[0];
-    if (!result) return null;
+    
+    if (!result || !result.meta) {
+      console.error(`❌ [Yahoo] ${yahooTicker} No Result in JSON:`, JSON.stringify(json).substring(0, 100));
+      return null;
+    }
 
     const meta = result.meta;
     const price = meta.regularMarketPrice;
+    
+    if (price === undefined || price === null) {
+      console.error(`❌ [Yahoo] ${yahooTicker} Price is missing from meta`);
+      return null;
+    }
+
+    console.log(`✅ [Yahoo] ${yahooTicker} Price: ${price}`);
     const prevClose = meta.previousClose || meta.chartPreviousClose;
     const change = prevClose ? price - prevClose : 0;
     const changePct = prevClose ? (change / prevClose) * 100 : 0;

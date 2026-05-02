@@ -2,25 +2,108 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827;
+  --sidebar-bg: #f9fafb;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --text-muted: #6b7280;
+  --input-bg: #f3f4f6;
+  --chat-user: #7c3aed;
+  --chat-ai: transparent;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+[data-theme='dark'] {
+  --background: #09090b;
+  --foreground: #f8fafc;
+  --sidebar-bg: #121214;
+  --card-bg: #18181b;
+  --border: #27272a;
+  --accent: #8b5cf6;
+  --accent-hover: #a78bfa;
+  --text-muted: #a1a1aa;
+  --input-bg: #1e1e22;
+  --chat-user: #27272a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  background: var(--background);
+html, body {
+  height: 100vh;
+  height: 100dvh; /* Dynamic Viewport Height for Mobile */
+  width: 100vw;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Smooth Transitions */
+.smooth-transition {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile Adjustments */
+.chat-container {
+  padding: 20px;
+}
+.input-wrapper.bottom {
+  padding: 0 24px 24px;
+}
+.input-wrapper.centered {
+  padding: 0;
+}
+
+.signal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1023px) {
+  .mobile-hide { display: none; }
+  .mobile-padding { padding: 12px; }
+  .chat-container { padding: 12px; }
+  .input-wrapper.bottom { padding: 0 12px 12px; }
+  .mobile-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    z-index: 2000 !important;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+    background-color: var(--sidebar-bg);
+  }
+  .signal-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+
+/* Fix for iOS momentum scrolling */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
 }
