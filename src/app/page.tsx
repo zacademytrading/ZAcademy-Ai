@@ -58,11 +58,21 @@ const GlobalStyle = () => (
 
     /* --- AI Content Typography (Fluid) --- */
     .ai-content { font-size: var(--font-md); line-height: 1.8; }
-    .ai-content p { margin-bottom: 20px; line-height: 1.8; white-space: pre-line; font-size: var(--font-md); }
-    .ai-content h3 { color: #7c3aed; margin: 32px 0 16px; font-size: var(--font-h3); font-weight: 700; }
-    .ai-content li { margin-bottom: 10px; line-height: 1.7; font-size: var(--font-md); }
-    .ai-content strong { color: #7c3aed; font-weight: 600; }
-    .ai-content pre { font-size: var(--font-code) !important; }
+    .ai-content p { margin: 0 0 14px; line-height: 1.85; font-size: var(--font-md); }
+    .ai-content h2 { color: #7c3aed; margin: 24px 0 12px; font-size: var(--font-h2); font-weight: 700; border-bottom: 1px solid rgba(124,58,237,0.2); padding-bottom: 8px; }
+    .ai-content h3 { color: #7c3aed; margin: 20px 0 10px; font-size: var(--font-h3); font-weight: 700; }
+    .ai-content strong { color: #a78bfa; font-weight: 700; }
+    .ai-content em { font-style: italic; color: inherit; }
+    .ai-content hr { border: none; border-top: 1px solid rgba(124,58,237,0.2); margin: 20px 0; }
+    .ai-content ul.ai-ul, .ai-content ol.ai-ol { padding: 0; margin: 12px 0 16px; list-style: none; }
+    .ai-content ul.ai-ul li, .ai-content ol.ai-ol li { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; line-height: 1.7; font-size: var(--font-md); }
+    .ai-content .ai-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: #7c3aed; margin-top: 7px; display: block; }
+    .ai-content .ai-num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; background: rgba(124,58,237,0.15); color: #7c3aed; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+    .ai-content pre.ai-pre { background: rgba(30,31,32,1); padding: 16px; border-radius: 12px; overflow-x: auto; margin: 16px 0; border: 1px solid rgba(124,58,237,0.2); position: relative; }
+    .ai-content pre.ai-pre code { font-family: monospace; font-size: 13px; color: #a78bfa; white-space: pre; }
+    .ai-content .code-lang { position: absolute; top: 8px; right: 12px; font-size: 11px; color: #8e918f; text-transform: uppercase; font-weight: 600; }
+    .ai-content code.ai-inline-code { background: rgba(124,58,237,0.15); color: #a78bfa; padding: 2px 7px; border-radius: 6px; font-family: monospace; font-size: 0.88em; }
+    .ai-content .ai-table-wrap { overflow-x: auto; margin: 20px 0; }
 
     /* --- Mobile-specific overrides --- */
     @media (max-width: 480px) {
@@ -312,154 +322,93 @@ export default function Home() {
 
   const themeVars = settings.theme === 'dark' ? { bg: '#131314', sidebar: '#1e1f20', border: '#333538', text: '#e3e3e3', textMuted: '#8e918f', inputBg: '#1e1f20', userBubble: '#282a2c', aiBubble: 'transparent', hover: '#333538' } : { bg: '#ffffff', sidebar: '#f0f4f9', border: '#e3e3e3', text: '#1f1f1f', textMuted: '#444746', inputBg: '#f0f4f9', userBubble: '#f0f4f9', aiBubble: 'transparent', hover: '#e3e3e3' };
 
-  // Parse inline markdown: **bold**, *italic*, `code`
-  const parseInline = (text: string): React.ReactNode[] => {
-    const parts: React.ReactNode[] = [];
-    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`([^`]+)`)/g;
-    let lastIndex = 0; let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
-      if (match[2]) parts.push(<strong key={match.index}>{match[2]}</strong>);
-      else if (match[3]) parts.push(<em key={match.index}>{match[3]}</em>);
-      else if (match[4]) parts.push(<code key={match.index} style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa', padding: '2px 6px', borderRadius: 6, fontSize: '0.9em', fontFamily: 'monospace' }}>{match[4]}</code>);
-      lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < text.length) parts.push(text.slice(lastIndex));
-    return parts;
+  const mdToHtml = (raw: string): string => {
+    if (!raw) return '';
+    let t = raw;
+    // Protect code blocks
+    const codeBlocks: string[] = [];
+    t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+      const label = lang ? `<span class="code-lang">${lang.toUpperCase()}</span>` : '';
+      codeBlocks.push(`<pre class="ai-pre">${label}<code>${code.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
+      return `%%CODE_${codeBlocks.length - 1}%%`;
+    });
+    // Headings
+    t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    t = t.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    t = t.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    // Bold & italic
+    t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+    // Inline code
+    t = t.replace(/`([^`]+)`/g, '<code class="ai-inline-code">$1</code>');
+    // HR
+    t = t.replace(/^---+$/gm, '<hr/>');
+    // Tables
+    t = t.replace(/((?:\|.+\|\n?)+)/g, (table) => {
+      const rows = table.trim().split('\n').filter(r => r.trim());
+      let html = '<div class="ai-table-wrap"><table>';
+      let headerDone = false;
+      rows.forEach(row => {
+        const cells = row.split('|').map(c => c.trim()).filter((_, i, a) => !(i === 0 && _ === '') && !(i === a.length-1 && _ === ''));
+        if (cells.every(c => /^[\-: ]+$/.test(c))) return;
+        if (!headerDone) { html += `<thead><tr>${cells.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`; headerDone = true; }
+        else html += `<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
+      });
+      html += '</tbody></table></div>';
+      return html;
+    });
+    // Numbered lists
+    t = t.replace(/((?:^\d+\. .+\n?)+)/gm, (block) => {
+      const items = block.trim().split('\n').map(l => l.replace(/^\d+\. /, '').trim());
+      return `<ol class="ai-ol">${items.map((item, i) => `<li><span class="ai-num">${i+1}</span><span>${item}</span></li>`).join('')}</ol>`;
+    });
+    // Bullet lists
+    t = t.replace(/((?:^[-*] .+\n?)+)/gm, (block) => {
+      const items = block.trim().split('\n').map(l => l.replace(/^[-*] /, '').trim());
+      return `<ul class="ai-ul">${items.map(item => `<li><span class="ai-dot"></span><span>${item}</span></li>`).join('')}</ul>`;
+    });
+    // Paragraphs: wrap non-tag lines
+    t = t.replace(/^(?!<[a-z%]).+$/gm, line => line.trim() ? `<p>${line}</p>` : '');
+    // Restore code blocks
+    t = t.replace(/%%CODE_(\d+)%%/g, (_, i) => codeBlocks[parseInt(i)]);
+    return t;
   };
 
   const renderMarkdown = (text: string) => {
     if (!text) return null;
-    const blocks = text.split(/(```[\s\S]*?```)/g);
-    return <div className="ai-content">{blocks.map((block, bi) => {
-      if (block.startsWith('```')) {
-        const langMatch = block.match(/^```(\w+)?/);
-        const lang = langMatch?.[1] || '';
-        const code = block.replace(/^```\w*\n?/, '').replace(/```$/, '').trim();
-        return (
-          <pre key={bi} style={{ background: themeVars.inputBg, padding: 14, borderRadius: 12, overflowX: 'auto', margin: '18px 0', border: `1px solid ${themeVars.border}`, fontSize: 13, fontFamily: 'monospace', color: '#7c3aed', position: 'relative' }}>
-            {lang && <span style={{ position: 'absolute', top: 8, right: 12, fontSize: 11, color: themeVars.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{lang}</span>}
-            <code>{code}</code>
-          </pre>
-        );
-      }
-      const paragraphs = block.split(/\n\s*\n/);
-      return paragraphs.map((para, pi) => {
-        if (para.includes('⚡ SIGNAL:')) {
-          const lines = para.split('\n').map(l => l.trim()).filter(l => l);
-          let title = lines.find(l => l.includes('⚡ SIGNAL:'))?.replace('⚡ SIGNAL:', '').trim() || 'Trading Signal';
-          const isBullish = para.toLowerCase().includes('bullish') || para.toLowerCase().includes('buy');
-          const colorMain = isBullish ? '#10b981' : '#ef4444';
-          const colorBg = isBullish ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-          return (
-            <div key={pi} style={{ margin: '24px 0', borderRadius: 20, overflow: 'hidden', border: `1px solid ${colorMain}`, background: themeVars.inputBg, boxShadow: isBullish ? '0 0 15px rgba(16, 185, 129, 0.3)' : '0 0 15px rgba(239, 68, 68, 0.3)' }}>
-              <div style={{ padding: '16px 20px', background: `linear-gradient(135deg, ${colorBg}, transparent)`, borderBottom: `1px solid ${settings.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, color: themeVars.text, fontSize: 16 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: colorMain, color: '#fff' }}><Activity size={16} /></span>{title}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12, background: colorMain, color: '#fff', textTransform: 'uppercase' }}>{isBullish ? 'BULLISH' : 'BEARISH'}</div>
-              </div>
-              <div style={{ padding: '20px' }}>
-                <div className="signal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
-                  {lines.map((line, li) => {
-                    if (line.includes('⚡ SIGNAL:') || line.toLowerCase().includes('bias:') || line.toLowerCase().includes('smc logic:')) return null;
-                    const parts = line.split(':'); if (parts.length < 2) return null;
-                    const label = parts[0].replace(/[-*]/g, '').trim(); const val = parts.slice(1).join(':').trim();
-                    let valColor = themeVars.text; if (label.toLowerCase().includes('target') || label.toLowerCase().includes('tp')) valColor = '#10b981'; if (label.toLowerCase().includes('invalidation') || label.toLowerCase().includes('sl')) valColor = '#ef4444';
-                    return (
-                      <div key={li} style={{ background: settings.theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: '12px 16px', borderRadius: 12, border: `1px solid ${settings.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }}>
-                        <div style={{ fontSize: 11, color: themeVars.textMuted, textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>{label}</div>
-                        <div style={{ fontSize: 16, fontFamily: 'monospace', fontWeight: 700, color: valColor }}>{val}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        const lines = para.split('\n');
-        const result: React.ReactNode[] = [];
-        let ulBuffer: React.ReactNode[] = [];
-        let olBuffer: { num: number; node: React.ReactNode }[] = [];
-
-        const flushUl = (key: string) => {
-          if (ulBuffer.length > 0) { result.push(<ul key={`ul-${key}`} style={{ paddingLeft: 24, margin: '12px 0', listStyle: 'none' }}>{ulBuffer}</ul>); ulBuffer = []; }
-        };
-        const flushOl = (key: string) => {
-          if (olBuffer.length > 0) { result.push(<ol key={`ol-${key}`} style={{ paddingLeft: 24, margin: '12px 0', listStyle: 'none' }}>{olBuffer.map(o => o.node)}</ol>); olBuffer = []; }
-        };
-
-        lines.forEach((rawLine, i) => {
-          const line = rawLine.trim();
-          if (!line) { flushUl(`e${i}`); flushOl(`e${i}`); return; }
-
-          const isTableLine = line.includes('|') && line.split('|').length >= 3;
-          const numMatch = line.match(/^(\d+)\.\s+(.+)/);
-
-          if (line.startsWith('# ')) {
-            flushUl(`h${i}`); flushOl(`h${i}`);
-            result.push(<h2 key={i} style={{ fontSize: 'var(--font-h2)', fontWeight: 700, color: '#7c3aed', margin: '28px 0 12px', borderBottom: `1px solid rgba(124,58,237,0.2)`, paddingBottom: 8 }}>{parseInline(line.replace(/^#+\s/, ''))}</h2>);
-          } else if (line.startsWith('## ')) {
-            flushUl(`h${i}`); flushOl(`h${i}`);
-            result.push(<h2 key={i} style={{ fontSize: 'var(--font-h2)', fontWeight: 700, color: '#7c3aed', margin: '28px 0 12px', borderBottom: `1px solid rgba(124,58,237,0.2)`, paddingBottom: 8 }}>{parseInline(line.replace(/^#+\s/, ''))}</h2>);
-          } else if (line.startsWith('### ')) {
-            flushUl(`h${i}`); flushOl(`h${i}`);
-            result.push(<h3 key={i}>{parseInline(line.replace('###', '').trim())}</h3>);
-          } else if (line.startsWith('- ') || line.startsWith('* ')) {
-            flushOl(`b${i}`);
-            ulBuffer.push(
-              <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
-                <span style={{ color: '#7c3aed', marginTop: 6, flexShrink: 0, width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', display: 'inline-block' }} />
-                <span>{parseInline(line.substring(2))}</span>
-              </li>
-            );
-          } else if (numMatch) {
-            flushUl(`n${i}`);
-            const num = parseInt(numMatch[1]);
-            const content = numMatch[2];
-            olBuffer.push({ num, node: (
-              <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
-                <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 8, background: 'rgba(124,58,237,0.15)', color: '#7c3aed', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{num}</span>
-                <span style={{ paddingTop: 3 }}>{parseInline(content)}</span>
-              </li>
-            )});
-          } else if (isTableLine) {
-            flushUl(`t${i}`); flushOl(`t${i}`);
-            const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => !((idx === 0 && c === '') || (idx === arr.length - 1 && c === '')));
-            if (cells.every(c => c.match(/^[ \-:|]+$/))) return; // separator row
-            // Collect table rows
-            const tableRows: string[][] = [];
-            let j = i;
-            while (j < lines.length && lines[j].includes('|')) {
-              const r = lines[j].trim();
-              const rc = r.split('|').map(c => c.trim()).filter((c, idx, arr) => !((idx === 0 && c === '') || (idx === arr.length - 1 && c === '')));
-              if (!rc.every(c => c.match(/^[ \-:|]+$/))) tableRows.push(rc);
-              j++;
-            }
-            if (tableRows.length > 0) {
-              result.push(
-                <div key={i} style={{ overflowX: 'auto', margin: '20px 0' }}>
-                  <table>
-                    <thead><tr>{tableRows[0].map((h, hi) => <th key={hi}>{parseInline(h)}</th>)}</tr></thead>
-                    <tbody>{tableRows.slice(1).map((row, ri) => (<tr key={ri}>{row.map((cell, ci) => <td key={ci}>{parseInline(cell)}</td>)}</tr>))}</tbody>
-                  </table>
+    // Special card for trading signals
+    if (text.includes('⚡ SIGNAL:')) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+      const title = lines.find(l => l.includes('⚡ SIGNAL:'))?.replace('⚡ SIGNAL:', '').trim() || 'Trading Signal';
+      const isBullish = text.toLowerCase().includes('bullish') || text.toLowerCase().includes('buy');
+      const colorMain = isBullish ? '#10b981' : '#ef4444';
+      const colorBg = isBullish ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+      return (
+        <div style={{ margin: '24px 0', borderRadius: 20, overflow: 'hidden', border: `1px solid ${colorMain}`, background: themeVars.inputBg, boxShadow: isBullish ? '0 0 15px rgba(16,185,129,0.3)' : '0 0 15px rgba(239,68,68,0.3)' }}>
+          <div style={{ padding: '16px 20px', background: `linear-gradient(135deg, ${colorBg}, transparent)`, borderBottom: `1px solid rgba(255,255,255,0.05)`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, color: themeVars.text, fontSize: 16 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: colorMain, color: '#fff' }}><Activity size={16} /></span>{title}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12, background: colorMain, color: '#fff', textTransform: 'uppercase' }}>{isBullish ? 'BULLISH' : 'BEARISH'}</div>
+          </div>
+          <div style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+            {lines.filter(l => !l.includes('⚡ SIGNAL:') && l.includes(':')).map((line, li) => {
+              const [label, ...rest] = line.split(':'); const val = rest.join(':').trim();
+              let valColor = themeVars.text;
+              if (/tp|target/i.test(label)) valColor = '#10b981';
+              if (/sl|invalidation/i.test(label)) valColor = '#ef4444';
+              return (
+                <div key={li} style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ fontSize: 11, color: themeVars.textMuted, textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>{label.replace(/[-*]/g,'').trim()}</div>
+                  <div style={{ fontSize: 15, fontFamily: 'monospace', fontWeight: 700, color: valColor }}>{val}</div>
                 </div>
               );
-            }
-          } else if (line.startsWith('---') || line.startsWith('===')) {
-            flushUl(`hr${i}`); flushOl(`hr${i}`);
-            result.push(<hr key={i} style={{ border: 'none', borderTop: `1px solid rgba(124,58,237,0.2)`, margin: '20px 0' }} />);
-          } else {
-            flushUl(`p${i}`); flushOl(`p${i}`);
-            result.push(<p key={i} style={{ margin: '0 0 12px', lineHeight: 1.85 }}>{parseInline(line)}</p>);
-          }
-        });
-
-        flushUl('end'); flushOl('end');
-        return <div key={pi} style={{ marginBottom: 4 }}>{result}</div>;
-      });
-    })}</div>;
+            })}
+          </div>
+        </div>
+      );
+    }
+    return <div className="ai-content" dangerouslySetInnerHTML={{ __html: mdToHtml(text) }} />;
   };
+
 
   const renderInputArea = (isCentered: boolean) => (
     <div className={`input-wrapper ${isCentered ? 'centered' : 'bottom'}`} style={{ width: '100%', maxWidth: 800, margin: '0 auto', flexShrink: 0, zIndex: 10, position: 'relative' }}>
