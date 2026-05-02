@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, Plus, Settings, Camera, ChevronDown, Zap, BarChart2, Activity, Menu, X, LogIn, Moon, Sun, Globe, Brain, Mic, MicOff, Share2, Layers, MessageSquare, History, Trash2, MoreVertical, Search, Copy } from 'lucide-react';
 import { ZACADEMY_MODELS, type ModelKey } from '@/lib/models';
-import { TradingChart } from '@/components/TradingChart';
+
 import { SettingsModal } from '@/components/ui/SettingsModal';
 import { supabase, supabaseDb, signInWithEmail, signUpWithEmail, signInWithGoogle, resetPasswordForEmail } from '@/lib/supabase-client';
 
@@ -107,8 +107,7 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [historyData, setHistoryData] = useState<any[]>([]);
-  const [activeSymbol, setActiveSymbol] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false); 
   const [isMobile, setIsMobile] = useState(false);
@@ -308,8 +307,7 @@ export default function Home() {
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, images: selectedImages.length > 0 ? [...selectedImages] : undefined };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages); setInput(''); setSelectedImages([]); setIsLoading(true);
-    const symbolMatch = text.match(/\b(XAUUSD|XAGUSD|GOLD|EMAS|BTCUSD|ETHUSD|EURUSD|GBPUSD|USDJPY|IHSG|LQ45|[A-Z]{3,6})\b/);
-    if (symbolMatch) { const sym = symbolMatch[0].toUpperCase(); if (!['HALO', 'SAYA', 'HELLO'].includes(sym)) { setActiveSymbol(sym); setHistoryData([]); fetch(`/api/market/history?symbol=${sym}`).then(r => r.json()).then(data => { if (Array.isArray(data) && data.length > 0) setHistoryData(data); else setActiveSymbol(null); }).catch(() => setActiveSymbol(null)); } else { setActiveSymbol(null); } } else { setActiveSymbol(null); }
+
     try {
       const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.images ? [{ type: 'text', text: m.content }, ...m.images.map((img: string) => ({ type: 'image_url', image_url: { url: img } }))] : m.content })), model: selectedModel, settings }) });
       if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `Server error (${res.status})`); }
@@ -537,11 +535,7 @@ export default function Home() {
                   <div key={msg.id} style={{ display: 'flex', gap: 16, marginBottom: 32, justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     {msg.role === 'assistant' && <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid #7c3aed' }}><img src="/logo-dark.jpg" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
                     <div style={{ maxWidth: '85%', background: msg.role === 'user' ? themeVars.userBubble : themeVars.inputBg, padding: '16px 20px', borderRadius: 24, border: msg.role === 'assistant' ? `1px solid ${themeVars.border}` : 'none' }}>
-                      {msg.role === 'assistant' && activeSymbol && idx === messages.length - 1 && (
-                        <div style={{ marginBottom: 20, height: 320, borderRadius: 16, overflow: 'hidden', border: `1px solid ${themeVars.border}` }}>
-                          {historyData.length > 0 ? <TradingChart data={historyData} /> : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Loading data...</div>}
-                        </div>
-                      )}
+
                       {msg.role === 'assistant' && msg.isTyping ? <Typewriter text={msg.content} renderer={renderMarkdown} /> : renderMarkdown(msg.content)}
                     </div>
                   </div>
