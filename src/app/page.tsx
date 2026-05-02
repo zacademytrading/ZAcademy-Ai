@@ -203,7 +203,7 @@ export default function Home() {
           id: supaUser.id, 
           email: supaUser.email || '', 
           name: supaUser.user_metadata?.full_name || supaUser.email?.split('@')[0] || 'User', 
-          settings: { theme: 'dark', language: 'Bahasa Indonesia', personalIntelligence: '' } 
+          settings: { theme: 'dark', language: 'English', personalIntelligence: '' } 
         };
         // Merge with local settings if any
         try {
@@ -457,7 +457,7 @@ export default function Home() {
   const renderInputArea = (isCentered: boolean) => (
     <div className={`input-wrapper ${isCentered ? 'centered' : 'bottom'}`} style={{ background: isCentered ? 'transparent' : 'transparent', width: '100%', maxWidth: 800, margin: '0 auto', flexShrink: 0, zIndex: 10, position: 'relative' }}>
       {!isCentered && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: `linear-gradient(to top, ${themeVars.bg}, transparent)`, pointerEvents: 'none', zIndex: -1 }} />}
-      <div style={{ background: settings.theme === 'dark' ? 'rgba(30, 31, 32, 0.6)' : 'rgba(240, 244, 249, 0.7)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${settings.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`, borderRadius: 32, padding: '14px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
+      <div style={{ background: settings.theme === 'dark' ? 'rgba(30, 31, 32, 0.9)' : 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: `1px solid ${themeVars.border}`, borderRadius: 32, padding: '14px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
         {selectedImages.length > 0 && (
           <div style={{ display: 'flex', gap: 8, paddingBottom: 12, overflowX: 'auto' }}>
             {selectedImages.map((img, i) => (
@@ -468,7 +468,7 @@ export default function Home() {
             ))}
           </div>
         )}
-        <textarea ref={textareaRef} value={input} onChange={e => { setInput(e.target.value); e.target.style.height = '44px'; e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; }} rows={1} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(null); } }} placeholder="Tanya ZENIX AI..." disabled={isLoading} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: themeVars.text, fontSize: 16, resize: 'none', lineHeight: 1.5, padding: '4px 4px 12px', minHeight: 44 }} />
+        <textarea ref={textareaRef} value={input} onChange={e => { setInput(e.target.value); e.target.style.height = '44px'; e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; }} rows={1} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(null); } }} placeholder={settings.language === 'English' ? "Ask ZENIX AI..." : "Tanya ZENIX AI..."} disabled={isLoading} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: themeVars.text, fontSize: 16, resize: 'none', lineHeight: 1.5, padding: '4px 4px 12px', minHeight: 44 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', color: themeVars.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}><Plus size={24} /></button>
@@ -585,14 +585,14 @@ export default function Home() {
           <div style={{ padding: '20px 16px' }}>
             <button onClick={() => { setActiveSession(null); setMessages([]); }} className="new-chat-btn smooth-transition" style={{ width: sidebarOpen ? '100%' : '44px', height: '44px', borderRadius: '22px', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', overflow: 'hidden' }}>
               <Plus size={20} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap' }}>Chat Baru</span>
+              <span style={{ fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap' }}>{settings.language === 'English' ? 'New Chat' : 'Chat Baru'}</span>
             </button>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px' }}>
             {groupedChats.map(([groupName, items]) => (
               <div key={groupName} style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: themeVars.textMuted, padding: '10px 12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{groupName}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: themeVars.textMuted, padding: '10px 12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{settings.language === 'English' ? (groupName === 'Hari Ini' ? 'Today' : groupName === 'Kemarin' ? 'Yesterday' : groupName === '7 Hari Terakhir' ? 'Last 7 Days' : 'Older') : groupName}</div>
                 {items.map(c => (
                   <div key={c.id} onClick={() => loadSession(c.id)} className={`sidebar-item smooth-transition ${activeSession === c.id ? 'active' : ''}`}>
                     <MessageSquare size={16} style={{ flexShrink: 0 }} />
@@ -787,6 +787,15 @@ export default function Home() {
 
             <div style={{ marginTop: 40, display: 'flex', gap: 14 }}>
               <button onClick={() => setSettingsOpen(false)} style={{ flex: 1, padding: '16px', borderRadius: 16, border: 'none', background: 'transparent', color: themeVars.textMuted, fontWeight: 600, cursor: 'pointer' }}>Batal</button>
+              <button onClick={saveSettings} style={{ flex: 2, padding: '16px', borderRadius: 16, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontWeight: 700, cursor: 'pointer', boxShadow: '0 12px 24px -6px rgba(124, 58, 237, 0.4)' }}>Simpan Perubahan</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+>
               <button onClick={saveSettings} style={{ flex: 2, padding: '16px', borderRadius: 16, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', fontWeight: 700, cursor: 'pointer', boxShadow: '0 12px 24px -6px rgba(124, 58, 237, 0.4)' }}>Simpan Perubahan</button>
             </div>
           </div>
