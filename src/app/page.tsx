@@ -312,11 +312,37 @@ export default function Home() {
 
   const themeVars = settings.theme === 'dark' ? { bg: '#131314', sidebar: '#1e1f20', border: '#333538', text: '#e3e3e3', textMuted: '#8e918f', inputBg: '#1e1f20', userBubble: '#282a2c', aiBubble: 'transparent', hover: '#333538' } : { bg: '#ffffff', sidebar: '#f0f4f9', border: '#e3e3e3', text: '#1f1f1f', textMuted: '#444746', inputBg: '#f0f4f9', userBubble: '#f0f4f9', aiBubble: 'transparent', hover: '#e3e3e3' };
 
+  // Parse inline markdown: **bold**, *italic*, `code`
+  const parseInline = (text: string): React.ReactNode[] => {
+    const parts: React.ReactNode[] = [];
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`([^`]+)`)/g;
+    let lastIndex = 0; let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+      if (match[2]) parts.push(<strong key={match.index}>{match[2]}</strong>);
+      else if (match[3]) parts.push(<em key={match.index}>{match[3]}</em>);
+      else if (match[4]) parts.push(<code key={match.index} style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa', padding: '2px 6px', borderRadius: 6, fontSize: '0.9em', fontFamily: 'monospace' }}>{match[4]}</code>);
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+    return parts;
+  };
+
   const renderMarkdown = (text: string) => {
     if (!text) return null;
     const blocks = text.split(/(```[\s\S]*?```)/g);
     return <div className="ai-content">{blocks.map((block, bi) => {
-      if (block.startsWith('```')) { const code = block.replace(/```/g, '').trim(); return <pre key={bi} style={{ background: themeVars.inputBg, padding: 14, borderRadius: 12, overflowX: 'auto', margin: '18px 0', border: `1px solid ${themeVars.border}`, fontSize: 13, fontFamily: 'monospace', color: '#7c3aed' }}><code>{code}</code></pre>; }
+      if (block.startsWith('```')) {
+        const langMatch = block.match(/^```(\w+)?/);
+        const lang = langMatch?.[1] || '';
+        const code = block.replace(/^```\w*\n?/, '').replace(/```$/, '').trim();
+        return (
+          <pre key={bi} style={{ background: themeVars.inputBg, padding: 14, borderRadius: 12, overflowX: 'auto', margin: '18px 0', border: `1px solid ${themeVars.border}`, fontSize: 13, fontFamily: 'monospace', color: '#7c3aed', position: 'relative' }}>
+            {lang && <span style={{ position: 'absolute', top: 8, right: 12, fontSize: 11, color: themeVars.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{lang}</span>}
+            <code>{code}</code>
+          </pre>
+        );
+      }
       const paragraphs = block.split(/\n\s*\n/);
       return paragraphs.map((para, pi) => {
         if (para.includes('⚡ SIGNAL:')) {
@@ -350,21 +376,87 @@ export default function Home() {
             </div>
           );
         }
-        const lines = para.split('\n'); const elements: React.ReactNode[] = []; let currentTable: string[][] = [];
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim(); const isTableLine = line.includes('|') && line.split('|').length >= 3;
-          if (line.startsWith('###')) elements.push(<h3 key={i}>{line.replace('###', '').trim()}</h3>);
-          else if (line.startsWith('- ') || line.startsWith('* ')) elements.push(<li key={i}>{line.substring(2)}</li>);
-          else if (isTableLine) {
+
+        const lines = para.split('\n');
+        const result: React.ReactNode[] = [];
+        let ulBuffer: React.ReactNode[] = [];
+        let olBuffer: { num: number; node: React.ReactNode }[] = [];
+
+        const flushUl = (key: string) => {
+          if (ulBuffer.length > 0) { result.push(<ul key={`ul-${key}`} style={{ paddingLeft: 24, margin: '12px 0', listStyle: 'none' }}>{ulBuffer}</ul>); ulBuffer = []; }
+        };
+        const flushOl = (key: string) => {
+          if (olBuffer.length > 0) { result.push(<ol key={`ol-${key}`} style={{ paddingLeft: 24, margin: '12px 0', listStyle: 'none' }}>{olBuffer.map(o => o.node)}</ol>); olBuffer = []; }
+        };
+
+        lines.forEach((rawLine, i) => {
+          const line = rawLine.trim();
+          if (!line) { flushUl(`e${i}`); flushOl(`e${i}`); return; }
+
+          const isTableLine = line.includes('|') && line.split('|').length >= 3;
+          const numMatch = line.match(/^(\d+)\.\s+(.+)/);
+
+          if (line.startsWith('# ')) {
+            flushUl(`h${i}`); flushOl(`h${i}`);
+            result.push(<h2 key={i} style={{ fontSize: 'var(--font-h2)', fontWeight: 700, color: '#7c3aed', margin: '28px 0 12px', borderBottom: `1px solid rgba(124,58,237,0.2)`, paddingBottom: 8 }}>{parseInline(line.replace(/^#+\s/, ''))}</h2>);
+          } else if (line.startsWith('## ')) {
+            flushUl(`h${i}`); flushOl(`h${i}`);
+            result.push(<h2 key={i} style={{ fontSize: 'var(--font-h2)', fontWeight: 700, color: '#7c3aed', margin: '28px 0 12px', borderBottom: `1px solid rgba(124,58,237,0.2)`, paddingBottom: 8 }}>{parseInline(line.replace(/^#+\s/, ''))}</h2>);
+          } else if (line.startsWith('### ')) {
+            flushUl(`h${i}`); flushOl(`h${i}`);
+            result.push(<h3 key={i}>{parseInline(line.replace('###', '').trim())}</h3>);
+          } else if (line.startsWith('- ') || line.startsWith('* ')) {
+            flushOl(`b${i}`);
+            ulBuffer.push(
+              <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                <span style={{ color: '#7c3aed', marginTop: 6, flexShrink: 0, width: 6, height: 6, borderRadius: '50%', background: '#7c3aed', display: 'inline-block' }} />
+                <span>{parseInline(line.substring(2))}</span>
+              </li>
+            );
+          } else if (numMatch) {
+            flushUl(`n${i}`);
+            const num = parseInt(numMatch[1]);
+            const content = numMatch[2];
+            olBuffer.push({ num, node: (
+              <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
+                <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 8, background: 'rgba(124,58,237,0.15)', color: '#7c3aed', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{num}</span>
+                <span style={{ paddingTop: 3 }}>{parseInline(content)}</span>
+              </li>
+            )});
+          } else if (isTableLine) {
+            flushUl(`t${i}`); flushOl(`t${i}`);
             const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => !((idx === 0 && c === '') || (idx === arr.length - 1 && c === '')));
-            if (cells.length > 0 && !cells.every(c => c.match(/^[ \-:|]+$/))) currentTable.push(cells);
-            if (i === lines.length - 1 || !lines[i+1].includes('|')) {
-              if (currentTable.length > 0) { elements.push(<div key={i} style={{ overflowX: 'auto', margin: '20px 0' }}><table><thead><tr>{currentTable[0].map((h, hi) => <th key={hi}>{h}</th>)}</tr></thead><tbody>{currentTable.slice(1).map((row, ri) => (<tr key={ri}>{row.map((cell, ci) => <td key={ci}>{cell}</td>)}</tr>))}</tbody></table></div>); currentTable = []; }
+            if (cells.every(c => c.match(/^[ \-:|]+$/))) return; // separator row
+            // Collect table rows
+            const tableRows: string[][] = [];
+            let j = i;
+            while (j < lines.length && lines[j].includes('|')) {
+              const r = lines[j].trim();
+              const rc = r.split('|').map(c => c.trim()).filter((c, idx, arr) => !((idx === 0 && c === '') || (idx === arr.length - 1 && c === '')));
+              if (!rc.every(c => c.match(/^[ \-:|]+$/))) tableRows.push(rc);
+              j++;
             }
-          } else if (line !== '') elements.push(<span key={i}>{line} </span>);
-        }
-        const hasText = elements.some(el => React.isValidElement(el) && (el.type === 'span'));
-        return hasText ? <p key={pi}>{elements}</p> : <div key={pi}>{elements}</div>;
+            if (tableRows.length > 0) {
+              result.push(
+                <div key={i} style={{ overflowX: 'auto', margin: '20px 0' }}>
+                  <table>
+                    <thead><tr>{tableRows[0].map((h, hi) => <th key={hi}>{parseInline(h)}</th>)}</tr></thead>
+                    <tbody>{tableRows.slice(1).map((row, ri) => (<tr key={ri}>{row.map((cell, ci) => <td key={ci}>{parseInline(cell)}</td>)}</tr>))}</tbody>
+                  </table>
+                </div>
+              );
+            }
+          } else if (line.startsWith('---') || line.startsWith('===')) {
+            flushUl(`hr${i}`); flushOl(`hr${i}`);
+            result.push(<hr key={i} style={{ border: 'none', borderTop: `1px solid rgba(124,58,237,0.2)`, margin: '20px 0' }} />);
+          } else {
+            flushUl(`p${i}`); flushOl(`p${i}`);
+            result.push(<p key={i} style={{ margin: '0 0 12px', lineHeight: 1.85 }}>{parseInline(line)}</p>);
+          }
+        });
+
+        flushUl('end'); flushOl('end');
+        return <div key={pi} style={{ marginBottom: 4 }}>{result}</div>;
       });
     })}</div>;
   };
