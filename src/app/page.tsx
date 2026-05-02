@@ -42,23 +42,41 @@ const GlobalStyle = () => (
     @keyframes springUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .typing-dot { animation: blink 1.2s infinite; }
     @keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
-    
-    .sidebar-item { position: relative; cursor: pointer; border-radius: 50px; transition: all 0.2s; display: flex; alignItems: center; gap: 10px; padding: 10px 16px; margin-bottom: 4px; color: #8e918f; }
+
+    /* --- Sidebar Items --- */
+    .sidebar-item { position: relative; cursor: pointer; border-radius: 50px; transition: all 0.2s; display: flex; alignItems: center; gap: 10px; padding: 10px 16px; margin-bottom: 4px; color: #8e918f; font-size: var(--font-base); }
     .sidebar-item:hover { background: rgba(124, 58, 237, 0.08); color: inherit; }
     .sidebar-item.active { background: rgba(124, 58, 237, 0.15); color: #a855f7; font-weight: 500; }
     .sidebar-item .delete-icon { opacity: 0; transition: opacity 0.2s; }
     .sidebar-item:hover .delete-icon { opacity: 1; }
 
-    /* REAL TABLE STYLING */
-    table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(124, 58, 237, 0.2); }
-    th { background: rgba(124, 58, 237, 0.1); color: #7c3aed; font-weight: 700; text-align: left; padding: 14px 18px; border-bottom: 2px solid #7c3aed; }
-    td { padding: 12px 18px; border-bottom: 1px solid rgba(124, 58, 237, 0.1); color: inherit; line-height: 1.6; }
+    /* --- Fluid Table Styling --- */
+    table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: var(--font-base); border-radius: 16px; overflow: hidden; border: 1px solid rgba(124, 58, 237, 0.2); }
+    th { background: rgba(124, 58, 237, 0.1); color: #7c3aed; font-weight: 700; text-align: left; padding: clamp(10px, 1.5vw, 14px) clamp(12px, 2vw, 18px); border-bottom: 2px solid #7c3aed; font-size: var(--font-base); }
+    td { padding: clamp(10px, 1.2vw, 12px) clamp(12px, 2vw, 18px); border-bottom: 1px solid rgba(124, 58, 237, 0.1); color: inherit; line-height: 1.6; font-size: var(--font-base); }
     tr:nth-child(even) { background: rgba(124, 58, 237, 0.02); }
 
-    .ai-content p { margin-bottom: 20px; line-height: 1.8; white-space: pre-line; }
-    .ai-content h3 { color: #7c3aed; margin: 32px 0 16px; font-size: 19px; font-weight: 700; }
-    .ai-content li { margin-bottom: 10px; line-height: 1.7; }
+    /* --- AI Content Typography (Fluid) --- */
+    .ai-content { font-size: var(--font-md); line-height: 1.8; }
+    .ai-content p { margin-bottom: 20px; line-height: 1.8; white-space: pre-line; font-size: var(--font-md); }
+    .ai-content h3 { color: #7c3aed; margin: 32px 0 16px; font-size: var(--font-h3); font-weight: 700; }
+    .ai-content li { margin-bottom: 10px; line-height: 1.7; font-size: var(--font-md); }
     .ai-content strong { color: #7c3aed; font-weight: 600; }
+    .ai-content pre { font-size: var(--font-code) !important; }
+
+    /* --- Mobile-specific overrides --- */
+    @media (max-width: 480px) {
+      .sidebar-item { padding: 8px 12px; font-size: var(--font-base-sm); }
+      table { font-size: var(--font-base-sm); }
+      th, td { padding: 8px 10px; font-size: var(--font-base-sm); }
+      .ai-content p, .ai-content li { font-size: var(--font-base); line-height: 1.7; }
+      .ai-content h3 { font-size: var(--font-h2); }
+    }
+
+    /* --- Tablet overrides --- */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .sidebar-item { font-size: var(--font-base); }
+    }
   `}</style>
 );
 
@@ -365,7 +383,7 @@ export default function Home() {
             ))}
           </div>
         )}
-        <textarea ref={textareaRef} value={input} onChange={e => { setInput(e.target.value); e.target.style.height = '44px'; e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; }} rows={1} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(null); } }} placeholder={settings.language === 'English' ? "Ask ZENIX AI..." : "Tanya ZENIX AI..."} disabled={isLoading} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: themeVars.text, fontSize: 16, resize: 'none', lineHeight: 1.5, padding: '4px 4px 12px', minHeight: 44 }} />
+        <textarea ref={textareaRef} value={input} onChange={e => { setInput(e.target.value); e.target.style.height = '44px'; e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; }} rows={1} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(null); } }} placeholder={settings.language === 'English' ? "Ask ZENIX AI..." : "Tanya ZENIX AI..."} disabled={isLoading} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: themeVars.text, fontSize: 'var(--font-md)', resize: 'none', lineHeight: 1.5, padding: '4px 4px 12px', minHeight: 44 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', color: themeVars.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%' }}><Plus size={24} /></button>
@@ -389,8 +407,8 @@ export default function Home() {
           <div style={{ width: '100%', maxWidth: 440, background: 'rgba(24, 24, 27, 0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 28, padding: 40, zIndex: 10 }}>
             <div style={{ textAlign: 'center', marginBottom: 32 }}>
               <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 20px', border: '2px solid #7c3aed' }}><img src="/logo-dark.jpg" alt="ZENIX Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
-              <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px', color: '#fff' }}>ZENIX AI</h2>
-              <p style={{ color: '#a1a1aa', fontSize: 14 }}>Advanced SMC Trading Terminal</p>
+              <h2 style={{ fontSize: 'var(--font-h1)', fontWeight: 800, margin: '0 0 8px', color: '#fff' }}>ZENIX AI</h2>
+              <p style={{ color: '#a1a1aa', fontSize: 'var(--font-base)' }}>Advanced SMC Trading Terminal</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <input type="email" placeholder="Email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} style={{ background: '#1e1e22', border: '1px solid #27272a', borderRadius: 16, padding: '16px', color: '#fff', outline: 'none' }} />
@@ -441,8 +459,8 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'none', border: 'none', color: themeVars.textMuted, cursor: 'pointer' }}><Menu size={22} /></button>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontWeight: 600, fontSize: 18 }}>ZENIX</span>
-                <button onClick={() => setModelDropdownOpen(!modelDropdownOpen)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, padding: '6px 12px', color: themeVars.textMuted, fontSize: 13 }}>{selectedModel === 'zenix-fast' ? <Zap size={14} color="#f59e0b" /> : <Brain size={14} color="#7c3aed" />} {ZACADEMY_MODELS[selectedModel]?.name} <ChevronDown size={14} /></button>
+                <span style={{ fontWeight: 600, fontSize: 'var(--font-brand)' }}>ZENIX</span>
+                <button onClick={() => setModelDropdownOpen(!modelDropdownOpen)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, padding: '6px 12px', color: themeVars.textMuted, fontSize: 'var(--font-base-sm)' }}>{selectedModel === 'zenix-fast' ? <Zap size={14} color="#f59e0b" /> : <Brain size={14} color="#7c3aed" />} {ZACADEMY_MODELS[selectedModel]?.name} <ChevronDown size={14} /></button>
                 {modelDropdownOpen && (
                   <div style={{ position: 'absolute', top: 60, background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 16, padding: '8px', zIndex: 200 }}>
                     {(Object.keys(ZACADEMY_MODELS) as ModelKey[]).map(key => (
@@ -457,7 +475,7 @@ export default function Home() {
           <div ref={scrollContainerRef} onScroll={handleScroll} style={{ flex: 1, overflowY: 'auto' }}>
             {messages.length === 0 ? (
               <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: 840, margin: '0 auto', padding: 20 }}>
-                <h1 style={{ fontSize: 44, fontWeight: 600, textAlign: 'center', marginBottom: 40, background: 'linear-gradient(90deg, #c084fc, #ec4899, #f43f5e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{settings.language === 'English' ? 'Hello' : 'Halo'}, {user?.name?.split(' ')[0]}<br/><span style={{ color: themeVars.textMuted, fontSize: 32 }}>{settings.language === 'English' ? 'How can ZENIX help you today?' : 'Ada yang bisa ZENIX bantu hari ini?'}</span></h1>
+                <h1 style={{ fontSize: 'var(--font-hero)', fontWeight: 600, textAlign: 'center', marginBottom: 40, background: 'linear-gradient(90deg, #c084fc, #ec4899, #f43f5e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{settings.language === 'English' ? 'Hello' : 'Halo'}, {user?.name?.split(' ')[0]}<br/><span style={{ color: themeVars.textMuted, fontSize: 'var(--font-hero-sub)' }}>{settings.language === 'English' ? 'How can ZENIX help you today?' : 'Ada yang bisa ZENIX bantu hari ini?'}</span></h1>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 40 }}>
                   {[
                     { icon: <Activity size={16} color="#c084fc" />, text: settings.language === 'English' ? "XAUUSD SMC analysis" : "Analisa SMC XAUUSD" },

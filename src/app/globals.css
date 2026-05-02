@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* ============================================================
+   FLUID TYPOGRAPHY SYSTEM
+   Menggunakan clamp(min, preferred-vw, max) agar font size
+   otomatis scale antara ukuran minimum (mobile) dan
+   maksimum (desktop) mengikuti lebar viewport.
+   
+   Breakpoints:
+     📱 Mobile      : < 480px
+     📱 HP Besar    : 480px - 767px
+     📟 Tablet      : 768px - 1023px
+     🖥️ Desktop     : > 1024px
+   ============================================================ */
+
 :root {
   --background: #ffffff;
   --foreground: #111827;
@@ -12,6 +25,51 @@
   --input-bg: #f3f4f6;
   --chat-user: #7c3aed;
   --chat-ai: transparent;
+
+  /* --- Fluid Font Scale (CSS Custom Properties) --- */
+  /* Format: clamp(min-px, calc(vw + rem), max-px) */
+
+  /* Micro / Label  → 10px mobile, 11px desktop */
+  --font-xs:    clamp(0.625rem, 0.4vw + 0.5rem, 0.6875rem);
+
+  /* Caption / Badge → 11px mobile, 12px desktop */
+  --font-sm:    clamp(0.6875rem, 0.5vw + 0.55rem, 0.75rem);
+
+  /* Body Small → 12px mobile, 13px desktop */
+  --font-base-sm: clamp(0.75rem, 0.6vw + 0.6rem, 0.8125rem);
+
+  /* Body / Input → 14px mobile, 15px desktop */
+  --font-base:  clamp(0.875rem, 0.7vw + 0.7rem, 0.9375rem);
+
+  /* Body Large / Button → 15px mobile, 16px desktop */
+  --font-md:    clamp(0.9375rem, 0.8vw + 0.75rem, 1rem);
+
+  /* Subheading / Code → 15px mobile, 17px desktop */
+  --font-lg:    clamp(0.9375rem, 1vw + 0.7rem, 1.0625rem);
+
+  /* Heading Small → 16px mobile, 19px desktop */
+  --font-h3:    clamp(1rem, 1.2vw + 0.7rem, 1.1875rem);
+
+  /* Heading Medium → 18px mobile, 24px desktop */
+  --font-h2:    clamp(1.125rem, 1.5vw + 0.8rem, 1.5rem);
+
+  /* Heading Large → 20px mobile, 28px desktop */
+  --font-h1:    clamp(1.25rem, 2vw + 0.8rem, 1.75rem);
+
+  /* Hero Heading → 26px mobile, 44px desktop */
+  --font-hero:  clamp(1.625rem, 4vw + 0.8rem, 2.75rem);
+
+  /* Hero Sub → 20px mobile, 32px desktop */
+  --font-hero-sub: clamp(1.25rem, 2.5vw + 0.8rem, 2rem);
+
+  /* Brand / Logo → 16px mobile, 18px desktop */
+  --font-brand: clamp(1rem, 1.2vw + 0.7rem, 1.125rem);
+
+  /* Monospace / Data → 12px mobile, 16px desktop */
+  --font-mono:  clamp(0.75rem, 1vw + 0.55rem, 1rem);
+
+  /* Code block → 12px mobile, 13px desktop */
+  --font-code:  clamp(0.75rem, 0.6vw + 0.6rem, 0.8125rem);
 }
 
 [data-theme='dark'] {
@@ -31,6 +89,11 @@
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  /* Root font-size fluid: 14px mobile → 16px desktop */
+  font-size: clamp(0.875rem, 0.5vw + 0.75rem, 1rem);
 }
 
 html, body {
@@ -70,10 +133,10 @@ html, body {
 
 /* Mobile Adjustments */
 .chat-container {
-  padding: 20px;
+  padding: clamp(12px, 2vw, 20px);
 }
 .input-wrapper.bottom {
-  padding: 0 24px 24px;
+  padding: 0 clamp(12px, 2vw, 24px) clamp(12px, 2vw, 24px);
 }
 .input-wrapper.centered {
   padding: 0;
@@ -82,15 +145,31 @@ html, body {
 .signal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: clamp(10px, 1.5vw, 16px);
+  margin-bottom: clamp(16px, 2vw, 20px);
 }
 
+/* ============================================================
+   RESPONSIVE OVERRIDES PER BREAKPOINT
+   Hanya untuk pengecualian layout, bukan font
+   (font sudah fluid via clamp di atas)
+   ============================================================ */
+
+/* 📱 Mobile kecil: < 360px */
+@media (max-width: 360px) {
+  html { font-size: 13px; }
+}
+
+/* 📱 Mobile: < 480px */
+@media (max-width: 480px) {
+  .input-wrapper.bottom { padding: 0 10px 10px; }
+  .chat-container { padding: 10px; }
+}
+
+/* 📱 Semua mobile & tablet: < 1024px */
 @media (max-width: 1023px) {
   .mobile-hide { display: none; }
   .mobile-padding { padding: 12px; }
-  .chat-container { padding: 12px; }
-  .input-wrapper.bottom { padding: 0 12px 12px; }
   .mobile-sidebar {
     position: fixed !important;
     top: 0;
@@ -101,6 +180,17 @@ html, body {
     background-color: var(--sidebar-bg);
   }
   .signal-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+
+/* 📟 Tablet: 768px - 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  html { font-size: 15px; }
+  .signal-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* 🖥️ Desktop: > 1024px */
+@media (min-width: 1024px) {
+  html { font-size: 16px; }
 }
 
 /* Fix for iOS momentum scrolling */
