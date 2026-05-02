@@ -492,8 +492,8 @@ export default function Home() {
           
           <div style={{ width: '100%', maxWidth: 440, background: 'rgba(24, 24, 27, 0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 28, padding: 40, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', zIndex: 10, animation: 'springUp 0.6s cubic-bezier(0.25, 1, 0.5, 1)' }}>
             <div style={{ textAlign: 'center', marginBottom: 32 }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }}>
-                <Brain size={32} color="#fff" />
+              <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(124,58,237,0.3)', border: '2px solid #7c3aed' }}>
+                <img src="/logo-dark.jpg" alt="ZENIX Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px', background: 'linear-gradient(to right, #fff, #a1a1aa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ZENIX AI</h2>
               <p style={{ color: '#a1a1aa', fontSize: 14, margin: 0 }}>Advanced SMC Trading Terminal</p>
@@ -683,7 +683,11 @@ export default function Home() {
               <div style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
                 {messages.map((msg, idx) => (
                   <div key={msg.id} style={{ display: 'flex', gap: 16, marginBottom: 32, justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    {msg.role === 'assistant' && <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}><Brain size={20} color="#fff" /></div>}
+                    {msg.role === 'assistant' && (
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, boxShadow: '0 4px 12px rgba(124,58,237,0.3)', border: '1px solid rgba(124, 58, 237, 0.5)' }}>
+                        <img src="/logo-dark.jpg" alt="ZENIX" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
                     <div className="msg-content-wrapper" style={{ maxWidth: '92%', background: msg.role === 'user' ? themeVars.userBubble : (settings.theme === 'dark' ? 'rgba(30, 31, 32, 0.4)' : 'rgba(255, 255, 255, 0.6)'), backdropFilter: msg.role === 'assistant' ? 'blur(12px)' : 'none', WebkitBackdropFilter: msg.role === 'assistant' ? 'blur(12px)' : 'none', border: msg.role === 'assistant' ? `1px solid ${settings.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none', padding: msg.role === 'user' ? '12px 20px' : '16px 20px', borderRadius: msg.role === 'user' ? '24px' : '24px', boxShadow: msg.role === 'assistant' ? '0 8px 32px rgba(0,0,0,0.04)' : 'none' }}>
                       {msg.role === 'user' && msg.images && msg.images.length > 0 && (
                         <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>

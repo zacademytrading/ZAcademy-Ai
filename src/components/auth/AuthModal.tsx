@@ -37,8 +37,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       
       <div style={{ width: '100%', maxWidth: 440, background: 'rgba(24, 24, 27, 0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 28, padding: 40, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', zIndex: 10, animation: 'springUp 0.6s cubic-bezier(0.25, 1, 0.5, 1)' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }}>
-            <Brain size={32} color="#fff" />
+          <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(124,58,237,0.3)', border: '2px solid #7c3aed' }}>
+            <img src="/logo-dark.jpg" alt="ZENIX Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px', background: 'linear-gradient(to right, #fff, #a1a1aa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ZENIX AI</h2>
           <p style={{ color: '#a1a1aa', fontSize: 14, margin: 0 }}>Advanced SMC Trading Terminal</p>
