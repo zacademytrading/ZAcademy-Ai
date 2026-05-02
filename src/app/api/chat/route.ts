@@ -132,10 +132,10 @@ export async function POST(req: NextRequest) {
     const modelConfig = ZACADEMY_MODELS[modelKey];
     const groqModel = GROQ_MODELS[modelKey] || 'llama-3.3-70b-versatile';
 
-    const lang = settings?.language || 'Bahasa Indonesia';
+    const lang = settings?.language || 'English';
     const personalIntel = settings?.personalIntelligence || '';
 
-    let dynamicPrompt = `${SYSTEM_PROMPT}\n\nGunakan Bahasa: ${lang}.\nKarakter: Profesional, objektif, dan sangat cerdas.`;
+    let dynamicPrompt = `${SYSTEM_PROMPT}\n\nIMPORTANT: You MUST respond in ${lang}.\nCharacter: Professional, objective, and highly intelligent.`;
     if (personalIntel) dynamicPrompt += `\n\n[INSTRUKSI PERSONAL]: ${personalIntel}`;
 
     const lastMsg = messages[messages.length - 1];
@@ -174,8 +174,5 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     await sendErrorAlert(error, 'POST /api/chat');
     return NextResponse.json({ error: 'ZENIX sedang melakukan kalibrasi sistem...' }, { status: 500 });
-  }
-}
-alibrasi sistem...' }, { status: 500 });
   }
 }
