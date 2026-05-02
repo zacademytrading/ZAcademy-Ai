@@ -164,10 +164,61 @@ export async function POST(req: NextRequest) {
       } catch (e) {}
     }
 
-    const apiMessages = [
+    // Sanitize messages: Groq hanya terima content sebagai string atau
+    // array sederhana [{ type: 'text', text: ... }, { type: 'image_url', ... }]
+    // Pesan assistant HARUS berupa string (tidak boleh array)
+    const sanitizeMessages = (rawMessages: any[]): any[] => {
+      return rawMessages.map((msg) => {
+        // Role assistant: paksa jadi string
+        if (msg.role === 'assistant') {
+          const text = typeof msg.content === 'string'
+            ? msg.content
+            : Array.isArray(msg.content)
+              ? msg.content.map((c: any) => (typeof c === 'string' ? c : c?.text || '')).join('')
+              : String(msg.content || '');
+          return { role: 'assistant', content: text };
+        }
+
+        // Role user: normalkan content
+        if (msg.role === 'user') {
+          // Sudah string — kirim apa adanya
+          if (typeof msg.content === 'string') {
+            return { role: 'user', content: msg.content };
+          }
+
+          // Array content (bisa ada gambar) — hanya ambil teks + 1 gambar terakhir
+          if (Array.isArray(msg.content)) {
+            const textParts = msg.content.filter((c: any) => c?.type === 'text');
+            const imgParts  = msg.content.filter((c: any) => c?.type === 'image_url');
+
+            // Model fast (8b) tidak mendukung vision — hapus gambar
+            const supportsVision = groqModel.includes('70b') || groqModel.includes('scout') || groqModel.includes('vision');
+
+            const parts: any[] = textParts.length > 0 ? textParts : [{ type: 'text', text: '' }];
+            if (supportsVision && imgParts.length > 0) {
+              // Hanya kirim 1 gambar terakhir (Groq limit)
+              parts.push(imgParts[imgParts.length - 1]);
+            }
+
+            // Jika tidak ada gambar atau tidak support vision, return plain string
+            if (!supportsVision || imgParts.length === 0) {
+              const plainText = textParts.map((c: any) => c?.text || '').join(' ').trim();
+              return { role: 'user', content: plainText };
+            }
+
+            return { role: 'user', content: parts };
+          }
+        }
+
+        // System role — biarkan apa adanya
+        return msg;
+      });
+    };
+
+    const apiMessages = sanitizeMessages([
       { role: 'system', content: dynamicPrompt + marketContext + smcContext },
       ...messages
-    ];
+    ]);
 
     const content = await callGroq(apiMessages, groqModel, modelConfig.temperature);
     return NextResponse.json({ content, model: groqModel });
