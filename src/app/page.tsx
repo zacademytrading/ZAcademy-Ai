@@ -70,7 +70,7 @@ export default function Home() {
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPass, setRegPass] = useState('');
-  const [selectedModel, setSelectedModel] = useState<ModelKey>('zenix-think');
+  const [selectedModel, setSelectedModel] = useState<ModelKey>('zenix-fast');
   const [input, setInput] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -210,7 +210,9 @@ export default function Home() {
           const stored = localStorage.getItem('zenix_user');
           if (stored) {
             const parsed = JSON.parse(stored);
-            if (parsed.settings) u.settings = parsed.settings;
+            if (parsed.settings) {
+              u.settings = { ...u.settings, ...parsed.settings };
+            }
           }
         } catch(e) {}
         
@@ -247,8 +249,11 @@ export default function Home() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.theme);
-    document.body.style.backgroundColor = 'var(--background)';
+    document.documentElement.style.colorScheme = settings.theme;
+    const bgColor = settings.theme === 'dark' ? '#131314' : '#ffffff';
+    document.body.style.backgroundColor = bgColor;
   }, [settings.theme]);
+
 
   // Keyboard shortcut: Ctrl/Cmd + Enter to submit
   useEffect(() => {
