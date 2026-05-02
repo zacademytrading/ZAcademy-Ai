@@ -1,17 +1,16 @@
 // src/app/api/chat/route.ts
-// Backend AI Chat — Groq (primary) | ZAcademy V2
+// Backend AI Chat — Groq (primary) | ZAcademy V2 + Credit System + Web Search
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase-client';
 import { ZACADEMY_MODELS, type ModelKey } from '@/lib/models';
-import { getMarketData, detectAssetType } from '@/lib/market-data';
-import { getLatestTradingNews } from '@/lib/news';
+import { getMarketData } from '@/lib/market-data';
 import { detectStructure } from '@/lib/smc-detector';
 import { saveErrorLog } from '@/lib/error-service';
+import { deductCredits } from '@/lib/credits';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const GROQ_BASE = 'https://api.groq.com/openai/v1';
-const ADMIN_EMAILS = ['mwildanhikamd@gmail.com', 'zenixproffiicial@gmail.com'];
 
 const SYSTEM_PROMPT = `You are ZENIX, a professional advanced AI Trading assistant (Advanced System 2026) from ZAcademy.
 
@@ -63,24 +62,6 @@ const GROQ_MODELS: Record<ModelKey, string> = {
   'zenix-fast': 'llama-3.1-8b-instant',
 };
 
-async function getUserIntelligence(userId: string): Promise<string> {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('personal_intelligence')
-      .eq('id', userId)
-      .maybeSingle(); // Menggunakan maybeSingle agar tidak error jika data kosong
-    
-    if (error) {
-      console.warn('[Supabase Intelligence Error]', error.message);
-      return '';
-    }
-    return data?.personal_intelligence || '';
-  } catch (e) {
-    return '';
-  }
-}
-
 async function callGroq(messages: any[], model: string, temperature: number): Promise<string> {
   const res = await fetch(`${GROQ_BASE}/chat/completions`, {
     method: 'POST',
@@ -108,30 +89,61 @@ async function callGroq(messages: any[], model: string, temperature: number): Pr
 }
 
 async function sendErrorAlert(error: Error, context: string) {
-  // Simpan ke log file untuk Admin Dashboard
   await saveErrorLog(error, context);
-
-  const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-  const logMsg = `
-========================================
-[🚨 ZENIX AUTO-ALERT — ERROR DETECTED]
-Timestamp : ${timestamp} WIB
-Context   : ${context}
-Error     : ${error.message}
-========================================`;
-  console.error(logMsg);
+  console.error(`[🚨 ZENIX ERROR] ${context}: ${error.message}`);
 }
 
-async function fetchDuckDuckGoNews(query: string): Promise<string> {
+/**
+ * Real Web Search menggunakan DuckDuckGo HTML scraping
+ * Lebih robust dengan multiple fallback
+ */
+async function performWebSearch(query: string): Promise<string> {
   try {
-    const res = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    });
+    // Append trading context agar hasil lebih relevan
+    const searchQuery = `${query} trading forex crypto 2025 2026`;
+    
+    const res = await fetch(
+      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(searchQuery)}&kl=id-id`,
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml',
+          'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8',
+        },
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+
     if (!res.ok) return '';
     const html = await res.text();
-    const snippets = html.match(/<a class="result__snippet[^>]*>(.*?)<\/a>/gi) || [];
-    return snippets.slice(0, 3).map(s => s.replace(/<[^>]+>/g, '').trim()).join('\n- ');
+
+    // Parse hasil search dengan regex yang lebih akurat
+    const results: string[] = [];
+    
+    // Extract snippets
+    const snippetMatches = html.matchAll(/class="result__snippet[^"]*"[^>]*>([^<]+(?:<[^>]+>[^<]*<\/[^>]+>)*[^<]*)<\/a>/gi);
+    for (const match of snippetMatches) {
+      const text = match[1].replace(/<[^>]+>/g, '').trim();
+      if (text && text.length > 30) {
+        results.push(text);
+      }
+      if (results.length >= 5) break;
+    }
+
+    // Fallback: extract any text content from results
+    if (results.length === 0) {
+      const allSnippets = html.match(/result__snippet[^>]*>([^<]{40,300})</g) || [];
+      allSnippets.slice(0, 5).forEach(s => {
+        const text = s.replace(/[^>]+>/, '').trim();
+        if (text) results.push(text);
+      });
+    }
+
+    if (results.length === 0) return '';
+
+    return `\n\n[🔍 WEB SEARCH RESULTS for: "${query}"]\n${results.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n[Source: Real-time web search via ZENIX Search]`;
   } catch (e) {
+    console.error('[Web Search Error]:', e);
     return '';
   }
 }
@@ -139,7 +151,9 @@ async function fetchDuckDuckGoNews(query: string): Promise<string> {
 async function getHistoryData(symbol: string, interval: string = '1h') {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/market/history?symbol=${symbol}&interval=${interval}`);
+    const res = await fetch(`${baseUrl}/api/market/history?symbol=${symbol}&interval=${interval}`, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
@@ -155,47 +169,58 @@ function extractSymbol(text: string): string | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, model, settings, userId } = await req.json();
+    const { messages, model, settings, userId, useWebSearch } = await req.json();
     const modelKey = (model as ModelKey) || 'zenix-think';
     const modelConfig = ZACADEMY_MODELS[modelKey];
     const groqModel = GROQ_MODELS[modelKey] || 'llama-3.3-70b-versatile';
 
     const lang = settings?.language || 'English';
-    let personalIntel = settings?.personalIntelligence || '';
+    const personalIntel = settings?.personalIntelligence || '';
 
-    /* Sementara dinonaktifkan untuk debugging 
+    // ── CREDIT CHECK ─────────────────────────────────────────
     if (userId) {
-      const dbIntel = await getUserIntelligence(userId);
-      if (dbIntel && !personalIntel.includes(dbIntel)) {
-        personalIntel = dbIntel + (personalIntel ? "\n" + personalIntel : "");
+      const creditResult = await deductCredits(userId, modelKey);
+      if (!creditResult.success) {
+        return NextResponse.json(
+          { error: creditResult.error || 'Kredit habis. Tunggu reset bulanan.' },
+          { status: 402 } // Payment Required
+        );
       }
     }
-    */
 
+    // ── BUILD DYNAMIC PROMPT ──────────────────────────────────
     let dynamicPrompt = `${SYSTEM_PROMPT}\n\nIMPORTANT: You MUST respond in ${lang}.\nCharacter: Professional, objective, and highly intelligent.`;
     if (personalIntel) dynamicPrompt += `\n\n[INSTRUKSI PERSONAL]: ${personalIntel}`;
 
     const lastMsg = messages[messages.length - 1];
     const userQuery = typeof lastMsg?.content === 'string' ? lastMsg.content : '';
-    
+
     let marketContext = '';
     let smcContext = '';
-    let newsContext = '';
+    let searchContext = '';
     const sym = extractSymbol(userQuery);
 
-    // Deep Search Analysis: Jika ada simbol atau tanya berita
-    if (sym || userQuery.toLowerCase().includes('berita') || userQuery.toLowerCase().includes('news') || userQuery.toLowerCase().includes('sentimen')) {
+    // ── WEB SEARCH (jika user aktifkan toggle) ────────────────
+    if (useWebSearch && userQuery) {
+      try {
+        searchContext = await performWebSearch(userQuery);
+      } catch (e) {
+        console.error('[Search Error]', e);
+      }
+    } else if (!useWebSearch && (
+      userQuery.toLowerCase().includes('berita') ||
+      userQuery.toLowerCase().includes('news') ||
+      userQuery.toLowerCase().includes('sentimen') ||
+      userQuery.toLowerCase().includes('update')
+    )) {
+      // Auto-search hanya untuk query berita/sentimen tanpa toggle
       try {
         const searchQuery = sym ? `${sym} trading news sentiment 2026` : userQuery;
-        const news = await fetchDuckDuckGoNews(searchQuery);
-        if (news) {
-          newsContext = `\n\n[BERITA & SENTIMEN TERKINI]\n${news}`;
-        }
-      } catch (e) {
-        console.error('[News Search Error]', e);
-      }
+        searchContext = await performWebSearch(searchQuery);
+      } catch (e) {}
     }
 
+    // ── MARKET DATA & SMC ─────────────────────────────────────
     if (sym) {
       try {
         const [md, history] = await Promise.all([
@@ -214,12 +239,9 @@ export async function POST(req: NextRequest) {
       } catch (e) {}
     }
 
-    // Sanitize messages: Groq hanya terima content sebagai string atau
-    // array sederhana [{ type: 'text', text: ... }, { type: 'image_url', ... }]
-    // Pesan assistant HARUS berupa string (tidak boleh array)
+    // ── SANITIZE MESSAGES ─────────────────────────────────────
     const sanitizeMessages = (rawMessages: any[]): any[] => {
       return rawMessages.map((msg) => {
-        // Role assistant: paksa jadi string
         if (msg.role === 'assistant') {
           const text = typeof msg.content === 'string'
             ? msg.content
@@ -229,44 +251,33 @@ export async function POST(req: NextRequest) {
           return { role: 'assistant', content: text };
         }
 
-        // Role user: normalkan content
         if (msg.role === 'user') {
-          // Sudah string — kirim apa adanya
           if (typeof msg.content === 'string') {
             return { role: 'user', content: msg.content };
           }
 
-          // Array content (bisa ada gambar) — hanya ambil teks + 1 gambar terakhir
           if (Array.isArray(msg.content)) {
             const textParts = msg.content.filter((c: any) => c?.type === 'text');
             const imgParts  = msg.content.filter((c: any) => c?.type === 'image_url');
-
-            // Model fast (8b) tidak mendukung vision — hapus gambar
             const supportsVision = groqModel.includes('70b') || groqModel.includes('scout') || groqModel.includes('vision');
-
             const parts: any[] = textParts.length > 0 ? textParts : [{ type: 'text', text: '' }];
             if (supportsVision && imgParts.length > 0) {
-              // Hanya kirim 1 gambar terakhir (Groq limit)
               parts.push(imgParts[imgParts.length - 1]);
             }
-
-            // Jika tidak ada gambar atau tidak support vision, return plain string
             if (!supportsVision || imgParts.length === 0) {
               const plainText = textParts.map((c: any) => c?.text || '').join(' ').trim();
               return { role: 'user', content: plainText };
             }
-
             return { role: 'user', content: parts };
           }
         }
 
-        // System role — biarkan apa adanya
         return msg;
       });
     };
 
     const apiMessages = sanitizeMessages([
-      { role: 'system', content: dynamicPrompt + marketContext + smcContext + newsContext },
+      { role: 'system', content: dynamicPrompt + marketContext + smcContext + searchContext },
       ...messages
     ]);
 

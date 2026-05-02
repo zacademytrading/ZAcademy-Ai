@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Plus, Settings, Camera, ChevronDown, Zap, BarChart2, Activity, Menu, X, LogIn, Moon, Sun, Globe, Brain, Mic, MicOff, Share2, Layers, MessageSquare, History, Trash2, MoreVertical, Search, Copy } from 'lucide-react';
+import { Send, Plus, Settings, ChevronDown, Zap, BarChart2, Activity, Menu, Globe, Brain, Mic, MicOff, Layers, MessageSquare, Trash2, Search, Coins } from 'lucide-react';
 import { ZACADEMY_MODELS, type ModelKey } from '@/lib/models';
 
 import { SettingsModal } from '@/components/ui/SettingsModal';
@@ -13,6 +13,7 @@ interface Message { id: string; role: 'user' | 'assistant'; content: string; ima
 interface ChatSession { id: string; title: string; messages: Message[] }
 interface UserSettings { theme: 'dark'|'light'; language: string; personalIntelligence: string; }
 interface User { id: string; email: string; name: string; settings: UserSettings }
+interface CreditInfo { remaining: number; total: number; resetAt: string; }
 
 function cleanAIResponse(text: string): string {
   return text.trim();
@@ -96,6 +97,17 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [useWebSearch, setUseWebSearch] = useState(false);
+  const [credits, setCredits] = useState<CreditInfo | null>(null);
+
+  const toggleWebSearch = () => setUseWebSearch(prev => !prev);
+
+  const fetchCredits = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/credits?userId=${userId}`);
+      if (res.ok) setCredits(await res.json());
+    } catch {}
+  };
 
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false); 
@@ -202,7 +214,7 @@ export default function Home() {
           }
         } catch(e) {}
         localStorage.setItem('zenix_user', JSON.stringify(u)); 
-        setUser(u); setSettings(u.settings); setAuthMode(null); fetchChats(u.id);
+        setUser(u); setSettings(u.settings); setAuthMode(null); fetchChats(u.id); fetchCredits(u.id);
       } else {
         setAuthMode('login');
       }
@@ -298,12 +310,22 @@ export default function Home() {
     setMessages(newMessages); setInput(''); setSelectedImages([]); setIsLoading(true);
 
     try {
-      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.images ? [{ type: 'text', text: m.content }, ...m.images.map((img: string) => ({ type: 'image_url', image_url: { url: img } }))] : m.content })), model: selectedModel, settings, userId: user.id }) });
-      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `Server error (${res.status})`); }
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.images ? [{ type: 'text', text: m.content }, ...m.images.map((img: string) => ({ type: 'image_url', image_url: { url: img } }))] : m.content })), model: selectedModel, settings, userId: user.id, useWebSearch }) });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 402) {
+          // Kredit habis
+          setMessages(p => [...p, { id: Date.now().toString(), role: 'assistant', content: `💳 **Kredit Habis!**\n\n${errData.error || 'Kredit kamu sudah habis.'}\n\nUpgrade ke Pro atau tunggu reset bulanan.` }]);
+          return;
+        }
+        throw new Error(errData.error || `Server error (${res.status})`);
+      }
       const data = await res.json();
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content || '', isTyping: true };
       const updatedMessages = [...newMessages, aiMsg]; setMessages(updatedMessages);
       const sessionId = activeSession || Date.now().toString(); saveChat({ id: sessionId, title: text.substring(0,30), messages: updatedMessages }); setActiveSession(sessionId);
+      // Refresh credits setelah pesan berhasil
+      if (user) fetchCredits(user.id);
     } catch (err: any) { setMessages(p => [...p, { id: Date.now().toString(), role: 'assistant', content: `⚠️ System Alert: ${err.message || 'Connection lost'}. Please check your internet and try again.` }]); } finally { setIsLoading(false); }
   };
 
@@ -321,6 +343,8 @@ export default function Home() {
         isLoading={isLoading}
         isListening={isListening}
         toggleListening={toggleListening}
+        useWebSearch={useWebSearch}
+        toggleWebSearch={toggleWebSearch}
         handleSubmit={handleSubmit}
         fileInputRef={fileInputRef}
         textareaRef={textareaRef}
@@ -380,21 +404,39 @@ export default function Home() {
         />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', padding: '12px 24px', alignItems: 'center', justifyContent: 'space-between', background: themeVars.bg }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'none', border: 'none', color: themeVars.textMuted, cursor: 'pointer' }}><Menu size={22} /></button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontWeight: 600, fontSize: 'var(--font-brand)' }}>ZENIX</span>
-                <button onClick={() => setModelDropdownOpen(!modelDropdownOpen)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, padding: '6px 12px', color: themeVars.textMuted, fontSize: 'var(--font-base-sm)' }}>{selectedModel === 'zenix-fast' ? <Zap size={14} color="#f59e0b" /> : <Brain size={14} color="#7c3aed" />} {ZACADEMY_MODELS[selectedModel]?.name} <ChevronDown size={14} /></button>
+          <div style={{ display: 'flex', padding: 'clamp(8px,1.5vw,12px) clamp(12px,2.5vw,24px)', alignItems: 'center', justifyContent: 'space-between', background: themeVars.bg, borderBottom: `1px solid ${themeVars.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'none', border: 'none', color: themeVars.textMuted, cursor: 'pointer', padding: 4 }}><Menu size={20} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+                <span style={{ fontWeight: 700, fontSize: 'var(--font-brand)', background: 'linear-gradient(90deg,#c084fc,#818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ZENIX</span>
+                <button onClick={() => setModelDropdownOpen(!modelDropdownOpen)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: `1px solid ${themeVars.border}`, borderRadius: 10, padding: 'clamp(4px,1vw,6px) clamp(8px,1.5vw,12px)', color: themeVars.textMuted, fontSize: 'var(--font-base-sm)', cursor: 'pointer' }}>
+                  {selectedModel === 'zenix-fast' ? <Zap size={13} color="#f59e0b" /> : <Brain size={13} color="#7c3aed" />}
+                  <span className="mobile-hide">{ZACADEMY_MODELS[selectedModel]?.name}</span>
+                  <ChevronDown size={13} />
+                </button>
                 {modelDropdownOpen && (
-                  <div style={{ position: 'absolute', top: 60, background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 16, padding: '8px', zIndex: 200 }}>
+                  <div style={{ position: 'absolute', top: 44, left: 0, background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 16, padding: '8px', zIndex: 200, minWidth: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
                     {(Object.keys(ZACADEMY_MODELS) as ModelKey[]).map(key => (
-                      <div key={key} onClick={() => { setSelectedModel(key); setModelDropdownOpen(false); }} className="sidebar-item" style={{ background: selectedModel === key ? 'rgba(124, 58, 237, 0.1)' : 'transparent' }}>{key === 'zenix-fast' ? <Zap size={16} /> : <Brain size={16} />}<span>{ZACADEMY_MODELS[key].name}</span></div>
+                      <div key={key} onClick={() => { setSelectedModel(key); setModelDropdownOpen(false); }} className="sidebar-item" style={{ background: selectedModel === key ? 'rgba(124, 58, 237, 0.1)' : 'transparent' }}>
+                        {key === 'zenix-fast' ? <Zap size={15} color="#f59e0b" /> : <Brain size={15} color="#7c3aed" />}
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: 'var(--font-base)' }}>{ZACADEMY_MODELS[key].name}</div>
+                          <div style={{ fontSize: 'var(--font-xs)', color: themeVars.textMuted }}>{key === 'zenix-fast' ? '1 kredit/pesan' : '3 kredit/pesan'}</div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
             </div>
+            {/* Credit Badge */}
+            {credits && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: credits.remaining < 20 ? 'rgba(239,68,68,0.1)' : 'rgba(124,58,237,0.08)', border: `1px solid ${credits.remaining < 20 ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.2)'}`, borderRadius: 20, padding: 'clamp(4px,1vw,6px) clamp(10px,2vw,14px)' }}>
+                <Coins size={13} color={credits.remaining < 20 ? '#ef4444' : '#a855f7'} />
+                <span style={{ fontSize: 'var(--font-base-sm)', fontWeight: 600, color: credits.remaining < 20 ? '#ef4444' : '#a855f7' }}>{credits.remaining}</span>
+                <span className="mobile-hide" style={{ fontSize: 'var(--font-xs)', color: themeVars.textMuted }}>/ {credits.total} kredit</span>
+              </div>
+            )}
           </div>
 
           <div ref={scrollContainerRef} onScroll={handleScroll} style={{ flex: 1, overflowY: 'auto' }}>
