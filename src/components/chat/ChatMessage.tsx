@@ -29,11 +29,14 @@ const Typewriter = ({ text, renderer }: { text: string, renderer: (t: string) =>
 
 const mdToHtml = (raw: string): string => {
   if (!raw) return '';
-  let t = raw;
+  // Hapus internal thinking jika ada
+  let t = raw.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
+  
   const codeBlocks: string[] = [];
   t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
     const label = lang ? `<span class="code-lang">${lang.toUpperCase()}</span>` : '';
-    codeBlocks.push(`<pre class="ai-pre">${label}<code>${code.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
+    // Gunakan background yang lebih transparan
+    codeBlocks.push(`<pre class="ai-pre" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(124,58,237,0.2)">${label}<code>${code.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
     return `%%CODE_${codeBlocks.length - 1}%%`;
   });
   t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
@@ -45,6 +48,7 @@ const mdToHtml = (raw: string): string => {
   t = t.replace(/^---+$/gm, '<hr/>');
   t = t.replace(/((?:\|.+\|\n?)+)/g, (table) => {
     const rows = table.trim().split('\n').filter(r => r.trim());
+    if (rows.length < 2) return table; // Bukan tabel sungguran
     let html = '<div class="ai-table-wrap"><table>';
     let headerDone = false;
     rows.forEach(row => {

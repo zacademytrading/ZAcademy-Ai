@@ -57,7 +57,7 @@ const GlobalStyle = () => (
     .ai-content ul.ai-ul li, .ai-content ol.ai-ol li { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; line-height: 1.7; font-size: var(--font-md); }
     .ai-content .ai-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: #7c3aed; margin-top: 7px; display: block; }
     .ai-content .ai-num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; background: rgba(124,58,237,0.15); color: #7c3aed; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
-    .ai-content pre.ai-pre { background: rgba(30,31,32,1); padding: 16px; border-radius: 12px; overflow-x: auto; margin: 16px 0; border: 1px solid rgba(124,58,237,0.2); position: relative; }
+    .ai-content pre.ai-pre { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; overflow-x: auto; margin: 16px 0; border: 1px solid rgba(124,58,237,0.2); position: relative; }
     .ai-content pre.ai-pre code { font-family: monospace; font-size: 13px; color: #a78bfa; white-space: pre; }
     .ai-content .code-lang { position: absolute; top: 8px; right: 12px; font-size: 11px; color: #8e918f; text-transform: uppercase; font-weight: 600; }
     .ai-content code.ai-inline-code { background: rgba(124,58,237,0.15); color: #a78bfa; padding: 2px 7px; border-radius: 6px; font-family: monospace; font-size: 0.88em; }
