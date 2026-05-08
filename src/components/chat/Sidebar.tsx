@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Plus, MessageSquare, Trash2, Settings, LogIn } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Settings, LogIn, X } from 'lucide-react';
 
 interface ChatSession {
   id: string;
@@ -44,9 +44,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   themeVars,
 }) => {
   return (
-    <div className={`smooth-transition ${isMobile && sidebarOpen ? 'mobile-sidebar' : ''}`} style={{ width: sidebarOpen ? 280 : 0, background: themeVars.sidebar, borderRight: `1px solid ${themeVars.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 100 }}>
-      <div style={{ padding: '20px 16px' }}>
-        <button onClick={() => { setActiveSession(null); setMessages([]); }} style={{ width: sidebarOpen ? '100%' : '44px', height: '44px', borderRadius: '22px', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px' }}><Plus size={20} /><span>{settings.language === 'English' ? 'New Chat' : 'Chat Baru'}</span></button>
+    <div className={`smooth-transition ${isMobile && sidebarOpen ? 'mobile-sidebar' : ''}`} style={{ width: sidebarOpen ? (isMobile ? '85vw' : 280) : 0, maxWidth: isMobile ? 360 : 280, background: themeVars.sidebar, borderRight: `1px solid ${themeVars.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 2000 }}>
+      <div style={{ padding: '20px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={() => { setActiveSession(null); setMessages([]); if (isMobile) setSidebarOpen(false); }} style={{ flex: 1, height: '44px', borderRadius: '22px', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', touchAction: 'manipulation' }}>
+          <Plus size={20} />
+          <span style={{ fontSize: '15px', fontWeight: 600 }}>{settings.language === 'English' ? 'New Chat' : 'Chat Baru'}</span>
+        </button>
+        {isMobile && (
+          <button 
+            onClick={() => setSidebarOpen(false)} 
+            style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'transparent', color: themeVars.text, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', touchAction: 'manipulation' }}
+          >
+            <X size={24} />
+          </button>
+        )}
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px' }}>
         {groupedChats.map(([groupName, items]) => (

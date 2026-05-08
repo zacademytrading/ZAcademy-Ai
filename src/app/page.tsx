@@ -137,21 +137,29 @@ export default function Home() {
 
   const setSidebarOpen = useCallback((open: boolean) => {
     if (open) {
-      if (window.innerWidth < 1024) window.history.pushState(null, '', '#sidebar');
+      if (window.innerWidth < 1024 && window.location.hash !== '#sidebar') {
+        window.history.pushState(null, '', '#sidebar');
+      }
       setSidebarOpenRaw(true);
     } else {
-      if (window.location.hash === '#sidebar') window.history.back();
-      else setSidebarOpenRaw(false);
+      setSidebarOpenRaw(false); // UI instantly responds
+      if (window.location.hash === '#sidebar') {
+        window.history.back(); // Cleanup history stack
+      }
     }
   }, []);
 
   const setSettingsOpen = useCallback((open: boolean) => {
     if (open) {
-      window.history.pushState(null, '', '#settings');
+      if (window.location.hash !== '#settings') {
+        window.history.pushState(null, '', '#settings');
+      }
       setSettingsOpenRaw(true);
     } else {
-      if (window.location.hash === '#settings') window.history.back();
-      else setSettingsOpenRaw(false);
+      setSettingsOpenRaw(false); // UI instantly responds
+      if (window.location.hash === '#settings') {
+        window.history.back(); // Cleanup history stack
+      }
     }
   }, []);
 
