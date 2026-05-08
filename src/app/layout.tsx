@@ -32,8 +32,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  maximumScale: 1, // Fix: Prevent zooming on input focus in mobile SPA
+  userScalable: false, // Fix: Lock scale for app-like native feel
 };
 
 export default function RootLayout({
@@ -47,6 +47,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <script src="/dev-dashboard.js" defer></script>
         <script
           dangerouslySetInnerHTML={{
             __html: `

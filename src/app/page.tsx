@@ -110,15 +110,57 @@ export default function Home() {
   };
 
   const [isLoading, setIsLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false); 
+  const [sidebarOpenRaw, setSidebarOpenRaw] = useState(false); 
+  const [settingsOpenRaw, setSettingsOpenRaw] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const sidebarOpen = sidebarOpenRaw;
+  const settingsOpen = settingsOpenRaw;
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const hash = window.location.hash;
+      if (hash === '#sidebar') {
+        setSidebarOpenRaw(true);
+        setSettingsOpenRaw(false);
+      } else if (hash === '#settings') {
+        setSettingsOpenRaw(true);
+        setSidebarOpenRaw(false);
+      } else {
+        if (window.innerWidth < 1024) setSidebarOpenRaw(false);
+        setSettingsOpenRaw(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const setSidebarOpen = useCallback((open: boolean) => {
+    if (open) {
+      if (window.innerWidth < 1024) window.history.pushState(null, '', '#sidebar');
+      setSidebarOpenRaw(true);
+    } else {
+      if (window.location.hash === '#sidebar') window.history.back();
+      else setSidebarOpenRaw(false);
+    }
+  }, []);
+
+  const setSettingsOpen = useCallback((open: boolean) => {
+    if (open) {
+      window.history.pushState(null, '', '#settings');
+      setSettingsOpenRaw(true);
+    } else {
+      if (window.location.hash === '#settings') window.history.back();
+      else setSettingsOpenRaw(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkMobile = () => setIsMobile(window.innerWidth < 1024);
       checkMobile();
       window.addEventListener('resize', checkMobile);
-      if (window.innerWidth >= 1024) setSidebarOpen(true);
+      if (window.innerWidth >= 1024) setSidebarOpenRaw(true);
       return () => window.removeEventListener('resize', checkMobile);
     }
   }, []);
@@ -126,7 +168,6 @@ export default function Home() {
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [activeSession, setActiveSession] = useState<string | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [settings, setSettings] = useState<UserSettings>({ theme: 'dark', language: 'English', personalIntelligence: '' });
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -384,6 +425,13 @@ export default function Home() {
     <>
       <GlobalStyle />
       <div style={{ display: 'flex', height: '100vh', background: themeVars.bg, color: themeVars.text, overflow: 'hidden' }}>
+        {/* Mobile Sidebar Overlay */}
+        {isMobile && sidebarOpen && (
+          <div 
+            onClick={() => setSidebarOpen(false)} 
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1999, backdropFilter: 'blur(2px)' }} 
+          />
+        )}
         <Sidebar 
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
@@ -441,17 +489,24 @@ export default function Home() {
 
           <div ref={scrollContainerRef} onScroll={handleScroll} style={{ flex: 1, overflowY: 'auto' }}>
             {messages.length === 0 ? (
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: 840, margin: '0 auto', padding: 20 }}>
-                <h1 style={{ fontSize: 'var(--font-hero)', fontWeight: 600, textAlign: 'center', marginBottom: 40, background: 'linear-gradient(90deg, #c084fc, #ec4899, #f43f5e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{settings.language === 'English' ? 'Hello' : 'Halo'}, {user?.name?.split(' ')[0]}<br/><span style={{ color: themeVars.textMuted, fontSize: 'var(--font-hero-sub)' }}>{settings.language === 'English' ? 'How can ZENIX help you today?' : 'Ada yang bisa ZENIX bantu hari ini?'}</span></h1>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 40 }}>
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: 840, margin: '0 auto', padding: 'clamp(20px, 4vw, 40px)', width: '100%' }}>
+                <h1 style={{ fontSize: 'var(--font-hero)', fontWeight: 600, textAlign: 'center', marginBottom: 'clamp(24px, 4vw, 40px)', background: 'linear-gradient(90deg, #c084fc, #ec4899, #f43f5e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.2 }}>
+                  {settings.language === 'English' ? 'Hello' : 'Halo'}, {user?.name?.split(' ')[0]}<br/>
+                  <span style={{ color: themeVars.textMuted, fontSize: 'var(--font-hero-sub)', marginTop: 8, display: 'inline-block' }}>
+                    {settings.language === 'English' ? 'How can ZENIX help you today?' : 'Ada yang bisa ZENIX bantu hari ini?'}
+                  </span>
+                </h1>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(10px, 2vw, 16px)', width: '100%', maxWidth: '800px', marginBottom: 'clamp(24px, 4vw, 40px)' }}>
                   {[
-                    { icon: <Activity size={16} color="#c084fc" />, text: settings.language === 'English' ? "XAUUSD SMC analysis" : "Analisa SMC XAUUSD" },
-                    { icon: <BarChart2 size={16} color="#ec4899" />, text: settings.language === 'English' ? "Crypto Fear & Greed sentiment" : "Gimana sentimen Fear & Greed Crypto?" },
-                    { icon: <Layers size={16} color="#f43f5e" />, text: settings.language === 'English' ? "Trading plan for $500 capital" : "Buat trading plan modal $500" },
-                    { icon: <Globe size={16} color="#3b82f6" />, text: settings.language === 'English' ? "Latest macro trading news" : "Cek berita makro ekonomi terkini" }
+                    { icon: <Activity size={20} color="#c084fc" />, text: settings.language === 'English' ? "XAUUSD SMC analysis" : "Analisa SMC XAUUSD" },
+                    { icon: <BarChart2 size={20} color="#ec4899" />, text: settings.language === 'English' ? "Crypto Fear & Greed sentiment" : "Sentimen Fear & Greed Crypto?" },
+                    { icon: <Layers size={20} color="#f43f5e" />, text: settings.language === 'English' ? "Trading plan for $500 capital" : "Trading plan modal $500" },
+                    { icon: <Globe size={20} color="#3b82f6" />, text: settings.language === 'English' ? "Latest macro trading news" : "Berita makro ekonomi terkini" }
                   ].map((chip, idx) => (
-                    <button key={idx} onClick={() => handleSubmit(null, chip.text)} className="smooth-transition" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px', background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 20, color: themeVars.text, cursor: 'pointer', fontSize: 14 }} onMouseOver={e => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)'} onMouseOut={e => e.currentTarget.style.background = themeVars.inputBg}>
-                      {chip.icon} {chip.text}
+                    <button key={idx} onClick={() => handleSubmit(null, chip.text)} className="smooth-transition" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px', background: themeVars.inputBg, border: `1px solid ${themeVars.border}`, borderRadius: 16, color: themeVars.text, cursor: 'pointer', textAlign: 'left', minHeight: 64, touchAction: 'manipulation' }}>
+                      <div style={{ flexShrink: 0 }}>{chip.icon}</div>
+                      <span style={{ fontSize: 'var(--font-base)', lineHeight: 1.4, fontWeight: 500 }}>{chip.text}</span>
                     </button>
                   ))}
                 </div>

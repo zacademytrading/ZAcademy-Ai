@@ -197,3 +197,45 @@ html, body {
 .scroll-touch {
   -webkit-overflow-scrolling: touch;
 }
+
+/* ============================================================
+   MOBILE TOUCH & UX FIXES
+   ============================================================ */
+
+/* 1. Hindari highlight biru saat elemen disentuh di mobile (iOS/Android) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 2. Pastikan area klik responsif tanpa delay 300ms dan cegah double-tap zoom */
+button, a, input, select, textarea, [role="button"], .sidebar-item {
+  touch-action: manipulation;
+}
+
+button, a, [role="button"], .sidebar-item {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 3. Pastikan tombol tidak "menahan" state hover di perangkat sentuh (Sticky Hover Fix) */
+@media (hover: none) and (pointer: coarse) {
+  button:hover, a:hover, [role="button"]:hover, .sidebar-item:hover {
+    background-color: inherit;
+    color: inherit;
+    transform: none;
+    opacity: 1; /* Remove any hover opacity effects */
+  }
+  
+  /* Pengecualian jika tombol menggunakan active class atau :active saat benar-benar disentuh */
+  button:active, a:active, [role="button"]:active {
+    opacity: 0.7;
+    transition: none;
+  }
+}
+
+/* 4. Pastikan area hitbox minimal 44px untuk aksesibilitas dan kemudahan tap di mobile */
+@media (max-width: 768px) {
+  button, [role="button"], select {
+    min-height: 44px; /* Native iOS/Android hit-target minimum */
+  }
+}
