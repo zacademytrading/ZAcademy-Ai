@@ -5,7 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase-client';
 import { ZACADEMY_MODELS, type ModelKey } from '@/lib/models';
 import { getMarketData } from '@/lib/market-data';
-import { detectStructure } from '@/lib/smc-detector';
+import { detectStructure, formatSMCContext } from '@/lib/smc-detector';
+import { getMarketSentiment, getLatestTradingNews } from '@/lib/news';
+import { calculateRisk, formatRiskContext } from '@/lib/risk-calculator';
 import { saveErrorLog } from '@/lib/error-service';
 import { deductCredits } from '@/lib/credits';
 
@@ -198,6 +200,7 @@ export async function POST(req: NextRequest) {
     let marketContext = '';
     let smcContext = '';
     let searchContext = '';
+    let sentimentContext = '';
     const sym = extractSymbol(userQuery);
 
     // ── WEB SEARCH (jika user aktifkan toggle) ────────────────
@@ -220,23 +223,65 @@ export async function POST(req: NextRequest) {
       } catch (e) {}
     }
 
-    // ── MARKET DATA & SMC ─────────────────────────────────────
+    // ── MARKET DATA, MTF, SENTIMEN & NEWS ─────────────────────
     if (sym) {
       try {
-        const [md, history] = await Promise.all([
+        const [md, history1h, history4h, history1d, sentiment, news] = await Promise.all([
           getMarketData(sym),
-          getHistoryData(sym, '1h')
+          getHistoryData(sym, '1h'),
+          getHistoryData(sym, '4h'),
+          getHistoryData(sym, '1day'),
+          getMarketSentiment(sym),
+          getLatestTradingNews(sym)
         ]);
 
         if (md?.price) {
           marketContext = `\n\n[DATA PASAR REALTIME] Aset: ${sym}, Harga: ${md.price}, Change: ${md.change_percent}%`;
         }
 
-        if (history && Array.isArray(history)) {
-          const structure = detectStructure(history);
-          smcContext = `\n\n[ANALISA SMC] BOS: ${structure.bos.length}, ChoCh: ${structure.choch.length}, FVG: ${structure.fvg.length}`;
+        if (sentiment) {
+          sentimentContext = `\n\n[SENTIMEN PASAR] ${sentiment}`;
         }
-      } catch (e) {}
+
+        if (news && news.length > 0) {
+          sentimentContext += `\n\n[BERITA TERBARU ${sym}]\n` + news.map((n, i) => `${i+1}. ${n.title} (${n.source})`).join('\n');
+        }
+
+        // Multi-Timeframe Analysis
+        if (history1d && Array.isArray(history1d)) {
+          smcContext += formatSMCContext(detectStructure(history1d), 'Daily (HTF)');
+        }
+        if (history4h && Array.isArray(history4h)) {
+          smcContext += formatSMCContext(detectStructure(history4h), 'H4 (MTF)');
+        }
+        if (history1h && Array.isArray(history1h)) {
+          smcContext += formatSMCContext(detectStructure(history1h), 'H1 (LTF)');
+        }
+
+        // ── RISK CALCULATOR LOGIC ─────────────────────────────
+        const balanceMatch = userQuery.match(/(?:modal|balance|capital|dana)\s*(?:\$|usd)?\s*(\d+(?:\.\d+)?)/i);
+        const riskMatch = userQuery.match(/(?:risiko|risk)\s*(\d+(?:\.\d+)?)\s*%/i);
+        const slMatch = userQuery.match(/(?:sl|stop loss)\s*(?:di|at)?\s*(\d+(?:\.\d+)?)/i);
+
+        if (balanceMatch && md?.price && slMatch) {
+          const balance = parseFloat(balanceMatch[1]);
+          const riskPercent = riskMatch ? parseFloat(riskMatch[1]) : 1; // Default 1%
+          const stopLoss = parseFloat(slMatch[1]);
+          
+          const riskReport = calculateRisk({
+            balance,
+            riskPercent,
+            entryPrice: md.price,
+            stopLoss,
+            symbol: sym,
+            assetType: md.type || 'unknown'
+          });
+          
+          smcContext += `\n\n${formatRiskContext(riskReport)}`;
+        }
+      } catch (e) {
+        console.error('[Market Data Error]', e);
+      }
     }
 
     // ── SANITIZE MESSAGES ─────────────────────────────────────
@@ -277,7 +322,7 @@ export async function POST(req: NextRequest) {
     };
 
     const apiMessages = sanitizeMessages([
-      { role: 'system', content: dynamicPrompt + marketContext + smcContext + searchContext },
+      { role: 'system', content: dynamicPrompt + marketContext + smcContext + searchContext + sentimentContext },
       ...messages
     ]);
 

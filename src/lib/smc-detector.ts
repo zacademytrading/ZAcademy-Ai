@@ -100,3 +100,34 @@ export function detectStructure(candles: Candle[]): MarketStructure {
 
   return { bos: bos.slice(-3), choch: choch.slice(-2), fvg: fvg.slice(-5) };
 }
+
+/**
+ * Format MarketStructure menjadi string deskriptif untuk prompt AI
+ */
+export function formatSMCContext(structure: MarketStructure, label: string = ""): string {
+  let context = `\n\n[ANALISA TEKNIS SMC ${label.toUpperCase()}]`;
+  
+  if (structure.bos.length > 0) {
+    context += `\n- Break of Structure (BOS) ${label}: ` + structure.bos.map(b => 
+      `${b.type.toUpperCase()} di ${Number(b.price).toFixed(2)}`
+    ).join(", ");
+  }
+  
+  if (structure.choch.length > 0) {
+    context += `\n- Change of Character (ChoCh) ${label}: ` + structure.choch.map(c => 
+      `${c.type.toUpperCase()} di ${Number(c.price).toFixed(2)}`
+    ).join(", ");
+  }
+  
+  if (structure.fvg.length > 0) {
+    context += `\n- Fair Value Gaps (FVG) ${label}: ` + structure.fvg.map(f => 
+      `${f.type.toUpperCase()} (${Number(f.bottom).toFixed(2)} - ${Number(f.top).toFixed(2)})`
+    ).join(", ");
+  }
+
+  if (structure.bos.length === 0 && structure.choch.length === 0 && structure.fvg.length === 0) {
+    context += `\nBelum terdeteksi struktur SMC ${label} yang signifikan.`;
+  }
+
+  return context;
+}
