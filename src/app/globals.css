@@ -100,7 +100,8 @@ html, body {
   height: 100vh;
   height: 100dvh; /* Dynamic Viewport Height for Mobile */
   width: 100vw;
-  overflow-x: hidden;
+  overflow: hidden; /* Lock the body to prevent the header from scrolling away */
+  overscroll-behavior-y: none; /* Prevent pull-to-refresh but allow swipe-back */
   margin: 0;
   padding: 0;
   background-color: var(--background);

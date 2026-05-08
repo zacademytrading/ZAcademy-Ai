@@ -55,7 +55,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
       WebkitBackdropFilter: 'blur(20px)',
       border: `1px solid ${themeVars.border}`,
       borderRadius: 'clamp(20px, 3vw, 32px)',
-      padding: 'clamp(10px, 2vw, 14px) clamp(14px, 2.5vw, 20px)',
+      padding: 'clamp(10px, 2vw, 14px) clamp(14px, 2.5vw, 20px) calc(clamp(10px, 2vw, 14px) + env(safe-area-inset-bottom))',
       boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
       display: 'flex',
       flexDirection: 'column',

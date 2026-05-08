@@ -32,8 +32,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 1, // Fix: Prevent zooming on input focus in mobile SPA
-  userScalable: false, // Fix: Lock scale for app-like native feel
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

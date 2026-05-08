@@ -432,7 +432,7 @@ export default function Home() {
   return (
     <>
       <GlobalStyle />
-      <div style={{ display: 'flex', height: '100vh', background: themeVars.bg, color: themeVars.text, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', height: '100%', background: themeVars.bg, color: themeVars.text, overflow: 'hidden' }}>
         {/* Mobile Sidebar Overlay */}
         {isMobile && sidebarOpen && (
           <div 
