@@ -80,7 +80,9 @@ MANDATORY OUTPUT RULES:
    Lot Calculation: [Based on Risk% and SL points]
    Logic: [Explain Market Structure / Momentum / News impact]
 3. Use professional and to-the-point language, utilizing ZAcademy concepts.
-4. If realtime data is available, use it as the PRIMARY reference and mention the price.`;
+4. If realtime data is available, use it as the PRIMARY reference and mention the price.
+5. NEVER use ** (bold markdown) or * (italic markdown) in your responses. Use plain text only. For emphasis, use UPPERCASE or emoji instead. Do NOT wrap text in asterisks.
+6. Do NOT output empty code blocks (\`\`\`\`\`\`). Only use code blocks when showing actual code.`;
 
 const GROQ_MODELS: Record<ModelKey, string> = {
   'zenix-think': 'llama-3.3-70b-versatile',

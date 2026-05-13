@@ -29,26 +29,43 @@ const Typewriter = ({ text, renderer }: { text: string, renderer: (t: string) =>
 
 const mdToHtml = (raw: string): string => {
   if (!raw) return '';
-  // Hapus internal thinking jika ada
+  // Hapus internal thinking/thought blocks secara agresif
   let t = raw.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
+  t = t.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  t = t.replace(/<internal>[\s\S]*?<\/internal>/gi, '').trim();
   
+  // Preserve code blocks dulu sebelum strip markdown
   const codeBlocks: string[] = [];
   t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const trimmedCode = code.trim();
+    // Skip code block kosong — ini penyebab "kotak blank"
+    if (!trimmedCode) return '';
     const label = lang ? `<span class="code-lang">${lang.toUpperCase()}</span>` : '';
-    // Gunakan background yang lebih transparan
-    codeBlocks.push(`<pre class="ai-pre" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(124,58,237,0.2)">${label}<code>${code.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
+    codeBlocks.push(`<pre class="ai-pre" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(124,58,237,0.2)">${label}<code>${trimmedCode.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
     return `%%CODE_${codeBlocks.length - 1}%%`;
   });
+
+  // === HAPUS SEMUA ** dan * (Bold/Italic markdown) ===
+  // User request: hapus bold sepenuhnya, biarkan text plain saja
+  t = t.replace(/\*{2,}([^*]*?)\*{2,}/g, '$1');  // **text** → text
+  t = t.replace(/\*{2,}/g, '');                   // Sisa ** yang tidak berpasangan
+  t = t.replace(/(?<!\w)\*([^*\n]+?)\*(?!\w)/g, '$1'); // *italic* → text
+  
+  // Headers (setelah strip bold agar heading text bersih)
   t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
   t = t.replace(/^## (.+)$/gm, '<h2>$1</h2>');
   t = t.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  t = t.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  
+  // Inline code (single backtick)
   t = t.replace(/`([^`]+)`/g, '<code class="ai-inline-code">$1</code>');
+  
+  // Horizontal rule
   t = t.replace(/^---+$/gm, '<hr/>');
+  
+  // Tables
   t = t.replace(/((?:\|.+\|\n?)+)/g, (table) => {
     const rows = table.trim().split('\n').filter(r => r.trim());
-    if (rows.length < 2) return table; // Bukan tabel sungguran
+    if (rows.length < 2) return table;
     let html = '<div class="ai-table-wrap"><table>';
     let headerDone = false;
     rows.forEach(row => {
@@ -60,16 +77,28 @@ const mdToHtml = (raw: string): string => {
     html += '</tbody></table></div>';
     return html;
   });
+  
+  // Ordered list
   t = t.replace(/((?:^\d+\. .+\n?)+)/gm, (block) => {
     const items = block.trim().split('\n').map(l => l.replace(/^\d+\. /, '').trim());
     return `<ol class="ai-ol">${items.map((item, i) => `<li><span class="ai-num">${i+1}</span><span>${item}</span></li>`).join('')}</ol>`;
   });
-  t = t.replace(/((?:^[-*] .+\n?)+)/gm, (block) => {
-    const items = block.trim().split('\n').map(l => l.replace(/^[-*] /, '').trim());
+  
+  // Unordered list — match lines starting with "- " only (not bare *)
+  t = t.replace(/((?:^- .+\n?)+)/gm, (block) => {
+    const items = block.trim().split('\n').map(l => l.replace(/^- /, '').trim());
     return `<ul class="ai-ul">${items.map(item => `<li><span class="ai-dot"></span><span>${item}</span></li>`).join('')}</ul>`;
   });
+  
+  // Wrap remaining plain text lines in <p>
   t = t.replace(/^(?!<[a-z%]).+$/gm, line => line.trim() ? `<p>${line}</p>` : '');
+  
+  // Restore code blocks
   t = t.replace(/%%CODE_(\d+)%%/g, (_, i) => codeBlocks[parseInt(i)]);
+  
+  // Final cleanup — hapus <p> kosong dan whitespace berlebihan
+  t = t.replace(/<p>\s*<\/p>/g, '');
+  
   return t;
 };
 
