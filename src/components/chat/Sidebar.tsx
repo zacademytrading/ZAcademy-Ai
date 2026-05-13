@@ -28,6 +28,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   sidebarOpen,
+  setSidebarOpen,
   isMobile,
   activeSession,
   setActiveSession,
